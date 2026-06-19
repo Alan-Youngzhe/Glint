@@ -1,0 +1,18 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / 前端
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# 环境与密钥
+.env
+.env.*
+*.local
+
+# 日志
+*.log
