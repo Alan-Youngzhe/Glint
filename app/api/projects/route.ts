@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { importZip } from "@/lib/import";
+import { parseProject } from "@/lib/parse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,11 +20,37 @@ export async function POST(req: NextRequest) {
       "untitled";
     const buf = Buffer.from(await file.arrayBuffer());
     const result = await importZip(buf, name);
+
+    // 符号/引用/调用解析（tree-sitter，确定性）
+    let parsed: { symbols: number; refs: number; edges: number } | null = null;
+    try {
+      parsed = await parseProject(result.projectId);
+      await prisma.job.create({
+        data: {
+          projectId: result.projectId,
+          type: "symbol",
+          status: "done",
+          progress: parsed,
+        },
+      });
+    } catch (e) {
+      console.error("[parseProject] failed:", e);
+      await prisma.job.create({
+        data: {
+          projectId: result.projectId,
+          type: "symbol",
+          status: "error",
+          error: e instanceof Error ? `${e.message}\n${e.stack ?? ""}` : String(e),
+        },
+      });
+    }
+
     return NextResponse.json({
       project: { id: result.projectId, name },
       jobId: result.jobId,
       fileCount: result.fileCount,
       skipped: result.skipped,
+      parsed,
     });
   } catch (err) {
     return NextResponse.json(
