@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "codemirror": "^6.0.2",
+    "d3-hierarchy": "^3.1.2",
     "dockview": "^4.2.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.469.0",
@@ -40,6 +41,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
