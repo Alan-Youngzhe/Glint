@@ -68,6 +68,7 @@ enum EventAction {
   dim4
   drill
   recall
+  agent
 }
 
 enum FocusType {
