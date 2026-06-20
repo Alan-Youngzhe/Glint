@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #08090A; color: #E9ECF1; overflow: hidden;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  @keyframes glintPop { from { opacity: 0; transform: translateY(6px) scale(0.99); } to { opacity: 1; transform: none; } }
+  @keyframes glintTagIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes glintPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border: 3px solid transparent; background-clip: padding-box; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); border: 3px solid transparent; background-clip: padding-box; border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</helmet>
+
+<div style="position: relative; height: 100vh; display: flex; flex-direction: column; background: #08090A;">
+
+  <sc-if value="{{ pixOn }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute; inset:0; pointer-events:none; z-index:60; opacity:0.12; mix-blend-mode:overlay; background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22140%22 height=%22140%22%3E%3Cfilter id=%22g%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%222%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23g)%22/%3E%3C/svg%3E'); background-size:150px 150px;"></div>
+  </sc-if>
+
+  <!-- ===== TITLE BAR ===== -->
+  <div style="flex: none; height: 38px; background-color: #0B0C0E; background-image: radial-gradient(rgba(233,236,241,0.10) 0.6px, transparent 0.85px); background-size: 3px 3px; color: #A2A9B4; display: flex; align-items: center; padding: 0 12px; gap: 18px; z-index: 30; border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <div style="display: flex; align-items: center; gap: 9px;">
+      <sc-if value="{{ pixOn }}" hint-placeholder-val="{{ true }}">
+        <div style="width: 16px; height: 16px; display:flex; align-items:center; justify-content:center; color:#2E4CFF; font-size:13px; line-height:1;">▲</div>
+      </sc-if>
+      <span style="font-family: 'Silkscreen', monospace; font-size: 12px; letter-spacing: 1px; color: #E9ECF1;">GLINT</span>
+    </div>
+    <div style="display:flex; gap:15px; font-size:13px; color:#A2A9B4;">
+      <span>File</span><span>Edit</span><span>View</span>
+    </div>
+    <div style="flex:1; display:flex; justify-content:center;">
+      <span style="font-size:12px; color:#565D67; font-family:'JetBrains Mono',monospace;">glint-api / src</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:2px;">
+      <button onClick="{{ toggleTree }}" title="Toggle Sidebar" style="display:flex; align-items:center; justify-content:center; width:30px; height:24px; background:transparent; border:none; border-radius:5px; cursor:pointer; padding:0;" style-hover="background:#191C20;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.6" stroke="{{ lay.leftS }}" stroke-width="1.2"></rect>
+          <rect x="2.3" y="3.3" width="3" height="9.4" rx="0.6" fill="{{ lay.leftF }}"></rect>
+          <line x1="5.7" y1="2.6" x2="5.7" y2="13.4" stroke="{{ lay.leftS }}" stroke-width="1.2"></line>
+        </svg>
+      </button>
+      <button onClick="{{ toggleBottom }}" title="Toggle Panel" style="display:flex; align-items:center; justify-content:center; width:30px; height:24px; background:transparent; border:none; border-radius:5px; cursor:pointer; padding:0;" style-hover="background:#191C20;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.6" stroke="{{ lay.botS }}" stroke-width="1.2"></rect>
+          <rect x="2.3" y="9.9" width="11.4" height="2.8" rx="0.6" fill="{{ lay.botF }}"></rect>
+          <line x1="1.6" y1="9.7" x2="14.4" y2="9.7" stroke="{{ lay.botS }}" stroke-width="1.2"></line>
+        </svg>
+      </button>
+      <button onClick="{{ toggleDock }}" title="Toggle Right Bar" style="display:flex; align-items:center; justify-content:center; width:30px; height:24px; background:transparent; border:none; border-radius:5px; cursor:pointer; padding:0;" style-hover="background:#191C20;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.6" stroke="{{ lay.rightS }}" stroke-width="1.2"></rect>
+          <rect x="10.7" y="3.3" width="3" height="9.4" rx="0.6" fill="{{ lay.rightF }}"></rect>
+          <line x1="10.3" y1="2.6" x2="10.3" y2="13.4" stroke="{{ lay.rightS }}" stroke-width="1.2"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN ROW ===== -->
+  <div style="flex: 1; min-height: 0; display: flex;">
+
+    <!-- ACTIVITY BAR -->
+    <div style="flex:none; width:48px; background-color:#08090A; background-image: radial-gradient(rgba(233,236,241,0.15) 0.6px, transparent 0.85px); background-size: 3px 3px; display:flex; flex-direction:column; align-items:center; padding-top:6px; gap:2px; border-right:1px solid rgba(255,255,255,0.08);">
+      <div onClick="{{ toggleTree }}" style="width:48px; height:42px; display:flex; align-items:center; justify-content:center; color:#E9ECF1; box-shadow: inset 2px 0 0 #2E4CFF; font-size:18px; cursor:pointer;">▤</div>
+      <div style="width:48px; height:42px; display:flex; align-items:center; justify-content:center; color:#565D67; font-size:17px;">⌕</div>
+      <div style="width:48px; height:42px; display:flex; align-items:center; justify-content:center; color:#565D67; font-size:17px;">⎇</div>
+      <div style="width:48px; height:42px; display:flex; align-items:center; justify-content:center; color:#565D67; font-size:17px;">▷</div>
+      <div style="width:48px; height:42px; display:flex; align-items:center; justify-content:center; color:#565D67; font-size:18px;">❑</div>
+      <div style="flex:1;"></div>
+      <div style="width:48px; height:42px; display:flex; align-items:center; justify-content:center; color:#565D67; font-size:18px;">⚙</div>
+    </div>
+
+    <!-- FILE TREE -->
+    <sc-if value="{{ treeOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="flex: none; width: 240px; background-color: #0F1113; background-image: radial-gradient(rgba(233,236,241,0.07) 0.6px, transparent 0.85px); background-size: 3px 3px; border-right: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; min-height: 0;">
+        <div style="flex: none; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px;">
+          <span style="font-family: 'Silkscreen', monospace; font-size: 9.5px; letter-spacing: 0.5px; color: #79818C;">EXPLORER</span>
+          <button onClick="{{ toggleTree }}" style="background: none; border: none; cursor: pointer; color: #565D67; font-size: 14px; padding: 4px;">⟨</button>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 2px 0 8px;">
+          <sc-for list="{{ tree }}" as="t" hint-placeholder-count="14">
+            <div onClick="{{ t.onClick }}" style="display: flex; align-items: center; gap: 8px; height: 28px; cursor: {{ t.cursor }}; padding-left: {{ t.pad }}px; padding-right: 8px; background: {{ t.bg }}; box-shadow: {{ t.ring }};">
+              <span style="width: 6px; height: 6px; border-radius: {{ t.dotR }}; flex: none; background: {{ t.dot }};"></span>
+              <span style="font-size: 13px; color: {{ t.color }}; font-weight: {{ t.weight }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ t.name }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ treeClosed }}" hint-placeholder-val="{{ false }}">
+      <div style="flex: none; width: 0; overflow: hidden;"></div>
+    </sc-if>
+
+    <!-- CODE AREA -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #0F1113; min-height: 0;">
+
+      <!-- file tabs -->
+      <div style="flex: none; height: 36px; display: flex; align-items: stretch; background: #0B0C0E; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+          <div onClick="{{ tab.onClick }}" style="display: flex; align-items: center; gap: 8px; padding: 0 14px; cursor: pointer; font-size: 13px; color: {{ tab.color }}; background: {{ tab.bg }}; border-right: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 0 {{ tab.bar }};">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: {{ tab.dot }};"></span>{{ tab.name }}
+          </div>
+        </sc-for>
+        <div style="flex:1;"></div>
+      </div>
+
+      <!-- focus bar -->
+      <div style="flex: none; min-height: 44px; display: flex; align-items: center; gap: 12px; padding: 6px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); background: #0F1113; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: 'Silkscreen', monospace; font-size: 9px; letter-spacing: 0.5px; color: #565D67;">FOCUS</span>
+          <span style="font-size: 13px; font-weight: 500; font-family: 'JetBrains Mono', monospace; color: #E9ECF1;">{{ focusLabel }}</span>
+          <sc-if value="{{ showProv }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; color: {{ focusProv.color }}; background: {{ focusProv.bg }}; border: 1px solid rgba(255,255,255,0.08);">{{ focusProv.label }}</span>
+          </sc-if>
+        </div>
+        <sc-if value="{{ hintOpen }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 12px; color: #8094FF; display: inline-flex; align-items: center; gap: 5px; animation: glintPulse 1.8s ease-in-out infinite;">← 选好了，按 ⌥1 看这几行为什么这么写</span>
+        </sc-if>
+      </div>
+
+      <!-- code scroll -->
+      <div style="flex: 1; position: relative; overflow: auto; min-height: 0;">
+        <div style="position: relative; padding: 8px 0 220px; min-width: max-content;">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="24">
+            <div onClick="{{ r.onClick }}" style="display: flex; align-items: flex-start; height: 24px; line-height: 24px; cursor: text; background: {{ r.bg }}; box-shadow: inset 2px 0 0 {{ r.bar }};">
+              <span style="width: 48px; flex: none; text-align: right; padding-right: 16px; color: {{ r.numColor }}; font-family: 'JetBrains Mono', monospace; font-size: 12px; user-select: none;">{{ r.lineNo }}</span>
+              <span style="white-space: pre; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding-right: 24px;"><sc-for list="{{ r.tokens }}" as="tk" hint-placeholder-count="8"><span style="color: {{ tk.c }}; font-style: {{ tk.fs }};">{{ tk.t }}</span></sc-for></span>
+            </div>
+          </sc-for>
+
+          <!-- floating ⌥1 card -->
+          <sc-if value="{{ card.show }}" hint-placeholder-val="{{ false }}">
+            <div style="position: absolute; top: {{ card.top }}px; left: {{ card.left }}px; width: 372px; max-width: calc(100% - 70px); background-color: #141619; background-image: radial-gradient(rgba(233,236,241,0.05) 0.6px, transparent 0.85px); background-size: 3px 3px; border: 1px solid rgba(255,255,255,0.13); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04); z-index: 20; animation: glintPop 0.16s cubic-bezier(.2,0,0,1); overflow: hidden;">
+              <div style="padding: 13px 16px 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <div style="display: flex; align-items: center; gap: 9px;">
+                    <span style="font-family: 'Silkscreen', monospace; font-size: 8.5px; letter-spacing: 0.5px; color: #8094FF; border: 1px solid rgba(128,148,255,0.4); padding: 3px 6px; border-radius: 0;">{{ card.kind }}</span>
+                    <sc-if value="{{ showProv }}" hint-placeholder-val="{{ true }}">
+                      <span style="font-size: 11px; font-weight: 500; color: #79818C;">{{ card.prov.label }}</span>
+                    </sc-if>
+                  </div>
+                  <button onClick="{{ card.onClose }}" style="background: none; border: none; cursor: pointer; color: #79818C; font-size: 17px; line-height: 1; padding: 2px 4px;">×</button>
+                </div>
+                <div style="font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: #E9ECF1; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">{{ card.title }}</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+                  <sc-for list="{{ card.badges }}" as="b" hint-placeholder-count="3">
+                    <span style="font-size: 11px; color: #A2A9B4; background: #0F1113; border: 1px solid rgba(255,255,255,0.08); padding: 3px 9px; border-radius: 4px;">{{ b }}</span>
+                  </sc-for>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <sc-for list="{{ card.sections }}" as="s" hint-placeholder-count="3">
+                    <div>
+                      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.4px; color: #8094FF; margin-bottom: 4px;">{{ s.h }}</div>
+                      <div style="font-size: 13px; line-height: 1.62; color: #A2A9B4; text-wrap: pretty;">{{ s.b }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ card.hasLinks }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,0.08);">
+                    <sc-for list="{{ card.links }}" as="l" hint-placeholder-count="2">
+                      <button onClick="{{ l.onClick }}" style="font-family: inherit; font-size: 12px; font-weight: 500; color: #8094FF; background: #0F1113; border: 1px solid rgba(255,255,255,0.13); padding: 6px 11px; border-radius: 6px; cursor: pointer;">{{ l.t }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT DOCK -->
+    <sc-if value="{{ dockOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="flex: none; width: 470px; background-color: #0F1113; background-image: radial-gradient(rgba(233,236,241,0.07) 0.6px, transparent 0.85px); background-size: 3px 3px; border-left: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; min-height: 0;">
+        <div style="flex: none; height: 36px; display: flex; align-items: stretch; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <sc-for list="{{ dockTabs }}" as="dt" hint-placeholder-count="3">
+            <div onClick="{{ dt.onClick }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: {{ dt.color }}; background: {{ dt.bg }}; box-shadow: inset 0 -2px 0 {{ dt.bar }}; border-right: 1px solid rgba(255,255,255,0.08);">
+              <kbd style="font-family: 'Silkscreen', monospace; font-size: 8.5px; padding: 2px 4px; border-radius: 0; background: {{ dt.kbdBg }}; color: {{ dt.kbdColor }};">⌥{{ dt.n }}</kbd>{{ dt.label }}
+            </div>
+          </sc-for>
+          <button onClick="{{ toggleDock }}" style="flex: none; width: 34px; background: none; border: none; border-left: 1px solid rgba(255,255,255,0.08); cursor: pointer; color: #565D67; font-size: 14px;">⟩</button>
+        </div>
+
+        <!-- ⌥2 CALL NETWORK -->
+        <sc-if value="{{ isCall }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div style="flex: none; padding: 13px 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 14px; font-weight: 600; letter-spacing: -0.008em; color: #E9ECF1;">调用关系 · 谁调用谁</div>
+              <div style="font-size: 12px; color: #79818C; margin-top: 3px;">图管结构，话管意义 — 每条线配一句解释</div>
+            </div>
+            <div style="flex: 1; overflow: auto; padding: 8px; background-color: #0B0C0E; background-image: radial-gradient(circle at 50% 34%, rgba(46,76,255,0.16), transparent 58%), radial-gradient(rgba(233,236,241,0.18) 0.7px, transparent 0.95px); background-size: 100% 100%, 3px 3px;">
+              <div style="position: relative; width: 660px; height: 480px;">
+                <svg width="660" height="480" style="position: absolute; inset: 0; overflow: visible;">
+                  <defs>
+                    <marker id="gar" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 Z" fill="#565D67"></path></marker>
+                    <marker id="garh" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 Z" fill="#2E4CFF"></path></marker>
+                  </defs>
+                  <sc-for list="{{ graph.edges }}" as="e" hint-placeholder-count="5">
+                    <path d="{{ e.d }}" fill="none" stroke="{{ e.stroke }}" stroke-width="{{ e.sw }}" marker-end="{{ e.marker }}" opacity="{{ e.op }}"></path>
+                  </sc-for>
+                </svg>
+                <sc-if value="{{ showEdgeLabels }}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{ graph.edges }}" as="e" hint-placeholder-count="5">
+                    <div onMouseEnter="{{ e.onEnter }}" onMouseLeave="{{ e.onLeave }}" style="position: absolute; left: {{ e.mx }}px; top: {{ e.my }}px; transform: translate(-50%,-50%); max-width: 150px; font-size: 11px; line-height: 1.35; color: {{ e.lblColor }}; background: #0F1113; border: 1px solid {{ e.lblBorder }}; padding: 4px 8px; border-radius: 6px; cursor: default; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.4);">{{ e.label }}</div>
+                  </sc-for>
+                </sc-if>
+                <sc-for list="{{ graph.nodes }}" as="n" hint-placeholder-count="6">
+                  <div onClick="{{ n.onClick }}" style="position: absolute; left: {{ n.x }}px; top: {{ n.y }}px; width: {{ n.w }}px; height: {{ n.h }}px; background: {{ n.bg }}; border: {{ n.ring }}; border-radius: 8px; box-shadow: inset 3px 0 0 {{ n.color }}, 0 1px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); cursor: pointer; padding: 8px 12px 8px 15px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 500; color: #E9ECF1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ n.label }}</div>
+                    <div style="font-size: 10.5px; color: #79818C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">{{ n.sub }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="flex: none; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08); background: #0F1113; font-size: 12.5px; line-height: 1.55; color: #A2A9B4; min-height: 56px; display: flex; align-items: center;">
+              <span style="color: #8094FF; margin-right: 8px; font-size: 14px;">↳</span>{{ graph.caption }}
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ⌥3 EXECUTION FLOW -->
+        <sc-if value="{{ isExec }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div style="flex: none; padding: 13px 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 14px; font-weight: 600; letter-spacing: -0.008em; color: #E9ECF1;">执行路径 · 创建订单</div>
+              <div style="font-size: 12px; color: #79818C; margin-top: 3px;">一件事依次怎么发生 — 跨层的故事线</div>
+            </div>
+            <div style="flex: 1; overflow: auto; padding: 16px 18px; background: #0F1113;">
+              <sc-for list="{{ exec }}" as="st" hint-placeholder-count="9">
+                <div style="display: flex; align-items: stretch; gap: 12px;">
+                  <div style="width: 66px; flex: none; display: flex; justify-content: flex-end; padding-top: 1px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500; padding: 3px 8px; height: fit-content; border-radius: 4px; color: #A2A9B4; background: #141619; border: 1px solid rgba(255,255,255,0.08);">{{ st.lane }}</span>
+                  </div>
+                  <div style="width: 16px; flex: none; position: relative; display: flex; justify-content: center;">
+                    <div style="width: 1px; background: rgba(255,255,255,0.10); height: 100%;"></div>
+                    <div style="position: absolute; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: {{ st.dotBg }}; border: 1px solid {{ st.dotBorder }};"></div>
+                  </div>
+                  <div style="flex: 1; padding-bottom: 20px; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-size: 13.5px; font-weight: 500; color: #E9ECF1;">{{ st.title }}</span>
+                      <sc-if value="{{ st.loop }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size: 10px; font-weight: 500; color: #8094FF; background: rgba(46,76,255,0.10); border: 1px solid rgba(128,148,255,0.3); padding: 1.5px 7px; border-radius: 4px;">循环 × items</span>
+                      </sc-if>
+                    </div>
+                    <div style="font-size: 11.5px; color: #79818C; font-family: 'JetBrains Mono', monospace; margin-top: 3px;">{{ st.sub }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ⌥4 ARCHITECTURE TREEMAP -->
+        <sc-if value="{{ isArch }}" hint-placeholder-val="{{ true }}">
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div style="flex: none; padding: 13px 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <div style="font-size: 14px; font-weight: 600; letter-spacing: -0.008em; color: #E9ECF1;">架构鸟瞰 · 项目版图</div>
+              <div style="font-size: 12px; color: #79818C; margin-top: 3px;">分几块、各部分多大 — 点区块下钻看角色</div>
+            </div>
+            <div style="flex: none; display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <sc-for list="{{ stack }}" as="s" hint-placeholder-count="4">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #A2A9B4; background: #141619; border: 1px solid rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 4px;"><span style="width: 5px; height: 5px; border-radius: 50%; background: {{ s.c }};"></span>{{ s.name }}</span>
+              </sc-for>
+            </div>
+            <div style="flex: 1; overflow: auto; padding: 14px 16px; background: #0F1113;">
+              <div style="display: flex; gap: 8px; height: 100%; min-height: 360px;">
+                <sc-for list="{{ treemap }}" as="m" hint-placeholder-count="6">
+                  <div style="flex: {{ m.w }} 1 0; display: flex; flex-direction: column; min-width: 0;">
+                    <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 7px;">
+                      <span style="font-size: 11.5px; font-weight: 600; color: #A2A9B4;">{{ m.name }}</span>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; min-height: 0;">
+                      <sc-for list="{{ m.files }}" as="f" hint-placeholder-count="2">
+                        <div onClick="{{ f.onClick }}" style="flex: {{ f.w }} 1 0; min-height: 38px; background: {{ f.bg }}; border: {{ f.ring }}; border-radius: 6px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: {{ f.weight }}; color: {{ f.nameColor }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ f.name }}</span>
+                          <span style="font-size: 9.5px; color: #79818C;">{{ f.tag }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{ dockClosed }}" hint-placeholder-val="{{ false }}">
+      <div style="flex: none; width: 44px; background: #0F1113; border-left: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 8px;">
+        <sc-for list="{{ dockTabs }}" as="dt" hint-placeholder-count="3">
+          <button onClick="{{ dt.onClick }}" title="{{ dt.label }}" style="width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.13); background: #141619; cursor: pointer; font-family: 'Silkscreen', monospace; font-size: 10px; color: {{ dt.railColor }};">{{ dt.n }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- ===== TRAJECTORY PANEL ===== -->
+  <sc-if value="{{ bottomOpen }}" hint-placeholder-val="{{ true }}">
+  <div style="flex: none; min-height: 56px; background-color: #0B0C0E; background-image: radial-gradient(rgba(233,236,241,0.10) 0.6px, transparent 0.85px); background-size: 3px 3px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 14px; padding: 8px 16px; z-index: 30;">
+    <div style="flex: none; display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-family: 'Silkscreen', monospace; font-size: 9px; letter-spacing: 0.3px; color: #A2A9B4;">TRAJECTORY</span>
+      <span style="font-size: 10.5px; color: #565D67;">Drill path · click to jump</span>
+    </div>
+    <div style="width: 1px; height: 28px; background: rgba(255,255,255,0.08);"></div>
+    <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 4px 0;">
+      <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="4">
+        <div style="flex: none; display: flex; align-items: center; gap: 8px;">
+          <sc-if value="{{ c.sep }}" hint-placeholder-val="{{ true }}">
+            <span style="color: #3C424B; font-size: 14px; user-select: none;">›</span>
+          </sc-if>
+          <div onClick="{{ c.onClick }}" style="display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 6px; background: {{ c.bg }}; border: 1px solid {{ c.border }}; box-shadow: {{ c.shadow }}; cursor: pointer; white-space: nowrap; animation: glintTagIn 0.2s cubic-bezier(.2,0,0,1);">
+            <sc-if value="{{ c.showKey }}" hint-placeholder-val="{{ true }}">
+              <span style="font-family: 'Silkscreen', monospace; font-size: 8.5px; color: {{ c.keyColor }}; background: {{ c.keyBg }}; border: 1px solid {{ c.keyBorder }}; padding: 2px 5px;">{{ c.keyLabel }}</span>
+            </sc-if>
+            <span style="font-size: 12.5px; color: {{ c.labelColor }}; font-family: 'JetBrains Mono', monospace; font-weight: {{ c.weight }};">{{ c.label }}</span>
+            <sc-if value="{{ c.hasClose }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ c.onClose }}" style="background: none; border: none; cursor: pointer; color: #565D67; font-size: 13px; line-height: 1; padding: 0 1px;">×</button>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ trajHas }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ trajClear }}" style="flex: none; font-family: inherit; font-size: 11.5px; color: #A2A9B4; background: #0F1113; border: 1px solid rgba(255,255,255,0.08); padding: 6px 11px; border-radius: 6px; cursor: pointer;">Clear <kbd style="font-family:'JetBrains Mono',monospace; font-size: 9px; opacity: 0.7;">Esc</kbd></button>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- ===== STATUS BAR ===== -->
+  <div style="flex: none; height: 24px; background-color: #0B0C0E; background-image: radial-gradient(rgba(233,236,241,0.10) 0.6px, transparent 0.85px); background-size: 3px 3px; border-top: 1px solid rgba(255,255,255,0.08); color: #79818C; display: flex; align-items: center; padding: 0 12px; gap: 14px; font-size: 11.5px; z-index: 30;">
+    <span style="display:inline-flex; align-items:center; gap:5px; color:#8094FF;">⎇ main</span>
+    <span style="display:inline-flex; align-items:center; gap:4px;">⊘ 0 ⚠ 0</span>
+    <div style="flex:1;"></div>
+    <span style="font-family:'JetBrains Mono',monospace;">{{ focusLabel }}</span>
+    <span>JavaScript</span>
+    <span>UTF-8</span>
+    <span style="display:inline-flex; align-items:center; gap:5px; color:#A2A9B4;"><sc-if value="{{ pixOn }}" hint-placeholder-val="{{ true }}"><span style="color:#2E4CFF;">▲</span></sc-if>Glint</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:840},&quot;pixelMotif&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;edgeLabels&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showProvenance&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.PAL = {
+      bg:'#08090A', bgSub:'#0B0C0E', surface:'#0F1113', elev:'#141619', hover:'#191C20',
+      border:'rgba(255,255,255,0.08)', borderStrong:'rgba(255,255,255,0.13)',
+      text:'#E9ECF1', text2:'#A2A9B4', text3:'#79818C', text4:'#565D67',
+      accent:'#2E4CFF', accentHover:'#4360FF', accentText:'#8094FF', accentFg:'#FFFFFF',
+      node:'#565D67',
+      // syntax (color lives here; UI chrome stays neutral)
+      kw:'#6175FF', str:'#3FB079', num:'#8094FF', fn:'#E9ECF1', prop:'#A2A9B4', comment:'#79818C', plain:'#E9ECF1', punct:'#A2A9B4'
+    };
+
+    this.RAW = {
+      orderService: [
+        "const db = require('../db');",
+        "const { getSession } = require('../middleware/session');",
+        "const logger = require('../utils/logger');",
+        "",
+        "// 创建订单：校验登录与库存，扣减后落库",
+        "async function createOrder(userId, items) {",
+        "  const session = await getSession(userId);",
+        "  if (!session) throw new Error('UNAUTHENTICATED');",
+        "",
+        "  let total = 0;",
+        "  for (const item of items) {",
+        "    const sku = await db.skus.find(item.skuId);",
+        "    if (sku.stock < item.qty) {",
+        "      throw new Error('OUT_OF_STOCK');",
+        "    }",
+        "    total += sku.price * item.qty;",
+        "  }",
+        "",
+        "  const order = await db.orders.insert({",
+        "    userId,",
+        "    items,",
+        "    total,",
+        "    status: 'PENDING',",
+        "  });",
+        "",
+        "  logger.info('order.created', { orderId: order.id });",
+        "  return order;",
+        "}",
+        "",
+        "module.exports = { createOrder };"
+      ],
+      orders: [
+        "const express = require('express');",
+        "const router = express.Router();",
+        "const { createOrder } = require('../services/orderService');",
+        "const { requireAuth } = require('../middleware/session');",
+        "",
+        "// POST /orders —— 创建订单",
+        "router.post('/', requireAuth, async (req, res) => {",
+        "  try {",
+        "    const order = await createOrder(req.userId, req.body.items);",
+        "    res.status(201).json(order);",
+        "  } catch (err) {",
+        "    res.status(400).json({ error: err.message });",
+        "  }",
+        "});",
+        "",
+        "module.exports = router;"
+      ],
+      index: [
+        "const express = require('express');",
+        "const ordersRouter = require('./routes/orders');",
+        "const authRouter = require('./routes/auth');",
+        "const { connect } = require('./db');",
+        "",
+        "const app = express();",
+        "app.use(express.json());",
+        "",
+        "app.use('/auth', authRouter);",
+        "app.use('/orders', ordersRouter);",
+        "",
+        "connect().then(() => {",
+        "  app.listen(3000, () => console.log('glint-api on :3000'));",
+        "});"
+      ]
+    };
+
+    this.TABMETA = {
+      orderService: { name:'orderService.js', dot:this.PAL.text3 },
+      orders: { name:'orders.js', dot:this.PAL.text3 },
+      index: { name:'index.js', dot:this.PAL.text3 }
+    };
+
+    this.BLOCKS = {
+      orderService: [
+        { focusId:'sel:imports', lines:[1,2,3] },
+        { focusId:'fn:createOrder', lines:[6] },
+        { focusId:'sel:session', lines:[7,8] },
+        { focusId:'sel:total', lines:[10] },
+        { focusId:'sel:stockloop', lines:[11,12,13,14,15,16,17] },
+        { focusId:'sel:insert', lines:[19,20,21,22,23,24] },
+        { focusId:'sel:log', lines:[26] },
+        { focusId:'sel:return', lines:[27] },
+        { focusId:'sel:export', lines:[30] }
+      ],
+      orders: [
+        { focusId:'sel:orders-imports', lines:[1,2,3,4] },
+        { focusId:'sel:route-post', lines:[7,8,9,10,11,12,13,14] },
+        { focusId:'sel:orders-export', lines:[16] }
+      ],
+      index: [
+        { focusId:'sel:index-setup', lines:[6,7] },
+        { focusId:'sel:index-mount', lines:[9,10] },
+        { focusId:'sel:index-listen', lines:[12,13,14] }
+      ]
+    };
+
+    this.FILES = {};
+    this.buildFiles();
+    this.buildFocus();
+    this.buildCards();
+    this.buildGraph();
+
+    this.state = {
+      activeFileId: 'orderService',
+      focusId: 'sel:session',
+      card: { focusId: 'sel:session' },
+      cardOpen: true,
+      trajectory: [{ focusId: 'sel:stockloop', dim: 1 }, { focusId: 'fn:createOrder', dim: 1 }],
+      dockOpen: true,
+      dockTab: 4,
+      treeOpen: true,
+      bottomOpen: true,
+      hoverEdge: null,
+      hintOpen: false
+    };
+
+    this.onKey = this.onKey.bind(this);
+  }
+
+  componentDidMount() { window.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); }
+
+  onKey(e) {
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      const map = { Digit1:1, Digit2:2, Digit3:3, Digit4:4 };
+      if (map[e.code]) { e.preventDefault(); this.openDim(map[e.code]); }
+    }
+    if (e.key === 'Escape') { this.escClose(); }
+  }
+
+  hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+  }
+
+  tokenizeLine(line) {
+    const P = this.PAL;
+    const KW = new Set(['const','let','var','function','async','await','return','if','else','for','of','in','new','throw','try','catch','module','require','class','while','switch','case','break','default','typeof','this']);
+    const LIT = new Set(['true','false','null','undefined']);
+    if (line.replace(/^\s*/,'').startsWith('//')) return [{ t:line, c:P.comment, fs:'italic' }];
+    const re = /('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`)|(\d+(?:\.\d+)?)|([A-Za-z_$][\w$]*)|(\s+)|([^\s])/g;
+    const toks = []; let m;
+    while ((m = re.exec(line))) {
+      if (m[1] != null) toks.push({ t:m[0], c:P.str });
+      else if (m[2] != null) toks.push({ t:m[0], c:P.num });
+      else if (m[3] != null) { const w=m[0]; let c=P.plain; if (KW.has(w)) c=P.kw; else if (LIT.has(w)) c=P.num; toks.push({ t:w, c, _id:true }); }
+      else if (m[4] != null) toks.push({ t:m[0], c:P.plain, _ws:true });
+      else toks.push({ t:m[0], c:P.punct });
+    }
+    for (let i=0;i<toks.length;i++) {
+      const tk = toks[i];
+      if (tk._id && tk.c===P.plain) {
+        let j=i+1; while (j<toks.length && toks[j]._ws) j++;
+        let k=i-1; while (k>=0 && toks[k]._ws) k--;
+        if (toks[j] && toks[j].t==='(') tk.c=P.fn;
+        else if (toks[k] && toks[k].t==='.') tk.c=P.prop;
+      }
+    }
+    return toks.map(t=>({ t:t.t, c:t.c, fs: t.fs || 'normal' }));
+  }
+
+  buildFiles() {
+    for (const id in this.RAW) {
+      const rows = this.RAW[id].map((str,i)=>({ lineNo:i+1, tokens:this.tokenizeLine(str) }));
+      const l2f = {};
+      (this.BLOCKS[id]||[]).forEach(b=>b.lines.forEach(ln=>l2f[ln]=b.focusId));
+      this.FILES[id] = { rows, l2f };
+    }
+  }
+
+  buildFocus() {
+    const F = {};
+    for (const fid in this.BLOCKS) {
+      this.BLOCKS[fid].forEach(b=>{
+        const a=Math.min.apply(null,b.lines), z=Math.max.apply(null,b.lines);
+        const lbl = a===z ? ('Line '+a) : ('Lines '+a+'–'+z);
+        F[b.focusId] = { id:b.focusId, fileId:fid, lines:b.lines, barLabel:lbl, tagLabel:lbl };
+      });
+    }
+    F['fn:createOrder'] = { id:'fn:createOrder', fileId:'orderService', lines:[6], barLabel:'createOrder()', tagLabel:'createOrder()' };
+    F['sym:getSession'] = { id:'sym:getSession', barLabel:'getSession()', tagLabel:'getSession()' };
+    F['sym:db'] = { id:'sym:db', barLabel:'db', tagLabel:'db facade' };
+    const fileDefs = {
+      index:['index.js','index'], authRoute:['auth.js',null], orders:['orders.js','orders'],
+      authService:['authService.js',null], orderService:['orderService.js','orderService'],
+      dbIndex:['index.js',null], models:['models.js',null], session:['session.js',null],
+      logger:['logger.js',null], pkg:['package.json',null]
+    };
+    for (const k in fileDefs) {
+      F['file:'+k] = { id:'file:'+k, barLabel:fileDefs[k][0], tagLabel:fileDefs[k][0], codeFile:fileDefs[k][1] };
+    }
+    this.FOCUS = F;
+  }
+
+  buildCards() {
+    const C = {};
+    C['sel:imports'] = { title:'模块依赖（require）', badges:['CommonJS','require'], sections:[
+      { h:'这是什么', b:'用 CommonJS 的 require 引入三个依赖：数据库门面 db、会话中间件里的 getSession、日志工具 logger。' },
+      { h:'为什么这么组织', b:'把基础设施（db / 日志）和横切关注点（会话）从业务里分离——createOrder 只组合它们，不关心实现细节。' }
+    ], links:[{ t:'跳到 getSession →', focus:'sym:getSession' }] };
+
+    C['fn:createOrder'] = { title:'createOrder(userId, items)', badges:['async 函数','模块导出','orders 模块核心'], sections:[
+      { h:'做什么', b:'订单领域的核心业务函数：鉴权 → 逐项校验库存并计价 → 落库 → 记日志 → 返回订单。' },
+      { h:'谁触发它', b:'由 routes/orders.js 的 POST /orders 处理器调用。' },
+      { h:'输出去哪', b:'返回创建好的 order 对象，由路由层序列化成 HTTP 响应。' }
+    ], links:[{ t:'⌥2 谁调用它 →', focus:'fn:createOrder', dim:2 }, { t:'⌥3 它的执行路径 →', focus:'fn:createOrder', dim:3 }] };
+
+    C['sel:session'] = { title:'登录态校验', badges:['async / await','守卫语句'], sections:[
+      { h:'这是什么', b:'用 await 调用 getSession 取当前用户会话；getSession 来自 middleware/session.js。' },
+      { h:'逻辑怎么走', b:'第 8 行是一个守卫语句（guard clause）：会话不存在就立刻抛 UNAUTHENTICATED 并提前返回，避免后面的库存与落库在未登录时被执行。' },
+      { h:'在上下文的位置', b:'位于函数体最前面——后端常见的「先鉴权、再处理业务」顺序。' }
+    ], links:[{ t:'跳到 getSession →', focus:'sym:getSession' }, { t:'⌥2 调用关系 →', focus:'sym:getSession', dim:2 }] };
+
+    C['sel:total'] = { title:'累计器初始化', badges:['let','累加器'], sections:[
+      { h:'为什么用 let', b:'total 要在循环里被反复修改，所以用 let 而非 const。它将累加每个商品的小计，作为订单总额。' }
+    ], links:[] };
+
+    C['sel:stockloop'] = { title:'逐项校验库存并计价', badges:['for…of','循环内 await','抛错中断'], sections:[
+      { h:'这几行干什么', b:'遍历购物项 items，对每个 SKU 查库存：不足就抛 OUT_OF_STOCK；够则把 price × qty 累加进 total。' },
+      { h:'为什么用 for…of', b:'因为循环体里有 await——forEach 不会等待异步完成。这里逐个 await 查库存，写法直观，但属于串行查询。' },
+      { h:'工程提示', b:'高并发下「先查后扣」可能超卖；生产环境通常用数据库事务或原子扣减。本 Demo 未做。' }
+    ], links:[{ t:'db.skus 是什么 →', focus:'sym:db' }] };
+
+    C['sel:insert'] = { title:'落库：写入一条订单', badges:['对象字面量','await','状态机起点'], sections:[
+      { h:'干什么', b:'把 userId、items、合计 total 与初始状态 PENDING 组装成一条记录，await 写入 orders 表，拿到带 id 的 order。' },
+      { h:"为什么 status 是 'PENDING'", b:'订单是一个状态机，创建时统一落在 PENDING，后续由支付 / 履约流程推进到 PAID / SHIPPED 等。' }
+    ], links:[{ t:'⌥2 看 db 的调用关系 →', focus:'sym:db', dim:2 }] };
+
+    C['sel:log'] = { title:'记录结构化日志', badges:['可观测性'], sections:[
+      { h:'为什么记这条', b:"落库成功后打一条 order.created 事件日志，带 orderId，便于后续排查与监控。是「副作用」而非业务结果。" }
+    ], links:[] };
+
+    C['sel:return'] = { title:'返回订单对象', badges:['return'], sections:[
+      { h:'返回给谁', b:'把创建好的 order 返回给调用方（路由处理器），由它决定 HTTP 状态码与响应体。' }
+    ], links:[] };
+
+    C['sel:export'] = { title:'导出 createOrder', badges:['CommonJS','module.exports'], sections:[
+      { h:'这是什么', b:'用 module.exports 暴露 createOrder，供 routes/orders.js 通过 require 引入并调用。' }
+    ], links:[] };
+
+    C['sel:route-post'] = { title:'路由处理器 POST /', badges:['Express','中间件链','try / catch'], sections:[
+      { h:'干什么', b:'注册 POST / 路由：先过 requireAuth 中间件鉴权，再调用 createOrder 创建订单，成功返回 201，失败统一 400。' },
+      { h:'为什么这么写', b:'把鉴权交给中间件（requireAuth），路由只负责编排与错误处理——职责单一，业务逻辑都在 service 层。' }
+    ], links:[{ t:'跳到 createOrder →', focus:'fn:createOrder' }, { t:'⌥3 执行路径 →', focus:'fn:createOrder', dim:3 }] };
+
+    C['sel:index-mount'] = { title:'挂载路由', badges:['Express','中间件'], sections:[
+      { h:'这是什么', b:'app.use 把 authRouter / ordersRouter 挂到 /auth 与 /orders 前缀下——这是整个 API 的「接线盘」。' }
+    ], links:[{ t:'⌥4 看整体架构 →', focus:'file:index', dim:4 }] };
+
+    C['sym:getSession'] = { title:'getSession(userId)', badges:['中间件','会话'], sections:[
+      { h:'做什么', b:'根据 userId 取出当前会话；无会话返回 null。被 createOrder 用于下单前鉴权。' },
+      { h:'定义在', b:'middleware/session.js，与 requireAuth 守卫同属会话模块。' }
+    ], links:[{ t:'⌥2 谁调用它 →', focus:'sym:getSession', dim:2 }] };
+
+    C['sym:db'] = { title:'db（数据库门面）', badges:['基础设施','单例'], sections:[
+      { h:'是什么', b:'对数据库的统一封装，暴露 skus、orders、users 等集合的读写方法。' },
+      { h:'谁在用', b:'services 层各业务函数。Demo 用内存实现替代真实库。' }
+    ], links:[{ t:'⌥4 它在架构哪一块 →', focus:'sym:db', dim:4 }] };
+
+    const fileCards = {
+      orderService:['orderService.js', [['services 层'],['业务逻辑'],['被 orders.js 调用']], [
+        ['在业务里负责什么','订单领域的业务逻辑：创建、（后续）查询与状态流转。不碰 HTTP、也不直接写 SQL，只编排 db 与中间件。'],
+        ['跟谁连','上游被 routes/orders.js 调用；下游依赖 db、middleware/session、utils/logger。'],
+        ['是否入口','不是。入口是 src/index.js。']
+      ]],
+      orders:['orders.js', [['routes 层'],['HTTP 入口']], [
+        ['负责什么','订单相关的 HTTP 路由（POST /orders 等），把请求编排给 orderService。'],
+        ['跟谁连','被 index.js 挂载；调用 services/orderService 与 middleware/session。']
+      ]],
+      index:['index.js', [['应用入口']], [
+        ['负责什么','应用入口：装配 Express、挂载各路由、连库后监听端口。'],
+        ['跟谁连','挂载 routes/*，依赖 db.connect。整个程序从这里启动。']
+      ]],
+      authRoute:['auth.js', [['routes 层']], [['负责什么','认证路由：注册 / 登录，签发会话 token。']]],
+      authService:['authService.js', [['services 层']], [['负责什么','认证业务：校验密码、签发 / 校验 token。与 orderService 同层。']]],
+      dbIndex:['db/index.js', [['基础设施']], [['负责什么','数据库门面：连接，以及 skus / orders / users 集合的读写。']]],
+      models:['models.js', [['基础设施']], [['负责什么','数据模型：User / Order / Sku 的结构定义。']]],
+      session:['session.js', [['中间件']], [['负责什么','会话中间件：requireAuth 守卫 + getSession 取会话。被路由与服务共用。']]],
+      logger:['logger.js', [['工具']], [['负责什么','日志工具：分级输出，给各模块记结构化事件。']]],
+      pkg:['package.json', [['配置']], [['负责什么','依赖与脚本：express 等依赖、启动命令。']]]
+    };
+    for (const k in fileCards) {
+      const fc = fileCards[k];
+      C['file:'+k] = { title:fc[0], badges:fc[1].map(x=>x[0]), sections:fc[2].map(s=>({ h:s[0], b:s[1] })), links:[] };
+    }
+
+    this.CARDS = C;
+  }
+
+  buildGraph() {
+    const P = this.PAL;
+    this.GNODES = [
+      { id:'n_route', focusId:'file:orders', x:58, y:24, w:178, h:54, label:'POST /orders', sub:'routes/orders.js' },
+      { id:'n_create', focusId:'fn:createOrder', x:222, y:198, w:200, h:62, label:'createOrder()', sub:'services/orderService.js' },
+      { id:'n_session', focusId:'sym:getSession', x:26, y:356, w:168, h:54, label:'getSession()', sub:'middleware/session.js' },
+      { id:'n_skus', focusId:'sym:db', x:236, y:382, w:158, h:52, label:'db.skus.find()', sub:'db/index.js' },
+      { id:'n_insert', focusId:'sym:db', x:434, y:354, w:182, h:54, label:'db.orders.insert()', sub:'db/index.js' },
+      { id:'n_logger', focusId:'file:logger', x:448, y:196, w:160, h:52, label:'logger.info()', sub:'utils/logger.js' }
+    ];
+    this.GEDGES = [
+      ['n_route','n_create','把请求体里的 items 交给它处理'],
+      ['n_create','n_session','先用 userId 取会话做鉴权'],
+      ['n_create','n_skus','循环里逐个查 SKU 库存与价格'],
+      ['n_create','n_insert','校验通过后写入一条 PENDING 订单'],
+      ['n_create','n_logger','落库成功记一条 order.created']
+    ];
+    this.EXEC = [
+      { lane:'Client', title:'发起请求', sub:'POST /orders · { items }' },
+      { lane:'Route', title:'进入路由处理器', sub:'routes/orders.js' },
+      { lane:'Auth', title:'校验会话', sub:'requireAuth → getSession' },
+      { lane:'Service', title:'createOrder 开始', sub:'services/orderService.js' },
+      { lane:'DB', title:'逐项查库存与价格', sub:'db.skus.find', loop:true },
+      { lane:'Service', title:'累计金额、校验通过', sub:'total += price × qty' },
+      { lane:'DB', title:'写入订单', sub:"db.orders.insert · status='PENDING'" },
+      { lane:'Service', title:'记录日志', sub:'logger.info("order.created")' },
+      { lane:'Client', title:'返回响应', sub:'201 Created · order' }
+    ];
+    // architecture: distinguished by neutral lightness (not category color)
+    this.TREE_MODULES = [
+      { name:'app', w:1.1, files:[['index','index.js',1.1,'入口']] },
+      { name:'routes', w:2.6, files:[['authRoute','auth.js',1.2,'HTTP'],['orders','orders.js',1.5,'HTTP']] },
+      { name:'services', w:3.6, files:[['authService','authService.js',1.6,'业务'],['orderService','orderService.js',2.2,'业务核心']] },
+      { name:'db', w:2.4, files:[['dbIndex','index.js',1.1,'门面'],['models','models.js',1.6,'模型']] },
+      { name:'middleware', w:1.5, files:[['session','session.js',1.5,'会话']] },
+      { name:'utils', w:1.0, files:[['logger','logger.js',1.0,'日志']] }
+    ];
+    this.STACK = [
+      { name:'Node.js', c:P.text3 }, { name:'Express', c:P.text3 },
+      { name:'JWT 会话', c:P.text3 }, { name:'内存 DB', c:P.text3 }
+    ];
+  }
+
+  // ---- actions ----
+  selectLine(n) {
+    const file = this.FILES[this.state.activeFileId];
+    const fid = file.l2f[n];
+    if (!fid) return;
+    this.setState({ focusId: fid, hintOpen: true });
+  }
+
+  setFocus(id, open) {
+    const f = this.FOCUS[id]; if (!f) return;
+    const upd = { focusId:id, hintOpen:false };
+    if (f.codeFile) upd.activeFileId = f.codeFile;
+    this.setState(upd, () => { if (open) this.openDim(1); });
+  }
+
+  switchTab(id) {
+    const first = (this.BLOCKS[id] && this.BLOCKS[id][0] && this.BLOCKS[id][0].focusId) || this.state.focusId;
+    this.setState({ activeFileId:id, focusId:first, hintOpen:true });
+  }
+
+  openDim(d) {
+    if (d !== 1) { this.setState({ dockOpen:true, dockTab:d, hintOpen:false }); return; }
+    this.setState(s => {
+      const fid = s.focusId;
+      let traj = s.trajectory;
+      if (s.card && s.cardOpen && s.card.focusId && s.card.focusId !== fid) {
+        traj = [{ focusId:s.card.focusId, dim:1 }].concat(traj.filter(t=>t.focusId!==s.card.focusId)).slice(0,9);
+      }
+      return { card:{ focusId:fid }, cardOpen:true, trajectory:traj, hintOpen:false };
+    });
+  }
+
+  escClose() {
+    this.setState(s => {
+      if (s.card && s.cardOpen) {
+        const traj = [{ focusId:s.card.focusId, dim:1 }].concat(s.trajectory.filter(t=>t.focusId!==s.card.focusId)).slice(0,9);
+        return { cardOpen:false, trajectory:traj };
+      }
+      return {};
+    });
+  }
+
+  reopenTag(fid) {
+    const f = this.FOCUS[fid];
+    this.setState(s => ({
+      focusId: fid,
+      activeFileId: (f && f.codeFile) || s.activeFileId,
+      card: { focusId:fid }, cardOpen:true,
+      trajectory: s.trajectory.filter(t=>t.focusId!==fid),
+      hintOpen:false
+    }));
+  }
+  closeTag(i) { this.setState(s => ({ trajectory: s.trajectory.filter((_,j)=>j!==i) })); }
+  clearTraj() { this.setState({ trajectory: [] }); }
+
+  toggleDock() { this.setState(s => ({ dockOpen: !s.dockOpen })); }
+  toggleTree() { this.setState(s => ({ treeOpen: !s.treeOpen })); }
+  toggleBottom() { this.setState(s => ({ bottomOpen: !s.bottomOpen })); }
+
+  provOf(fid) {
+    const P = this.PAL;
+    let label = '预生成';
+    if (fid.indexOf('sel:')===0) label = '实时 · 调 AI 解释';
+    else if (fid.indexOf('fn:')===0) label = '懒生成 · 已缓存';
+    else if (fid.indexOf('file:')===0) label = '预生成 · 库内直读';
+    else if (fid.indexOf('sym:')===0) label = 'AST 静态分析';
+    return { label, color:P.text2, bg:P.hover };
+  }
+
+  kindOf(fid) {
+    if (fid.indexOf('fn:')===0) return 'FUNCTION';
+    if (fid.indexOf('sym:')===0) return 'SYMBOL';
+    if (fid.indexOf('file:')===0) return 'FILE';
+    return 'SELECTION';
+  }
+
+  hiNode(fid) {
+    if (fid==='sym:getSession' || fid==='file:session') return 'n_session';
+    if (fid==='file:logger') return 'n_logger';
+    if (fid==='file:orders' || fid==='sel:route-post' || fid==='sel:orders-imports') return 'n_route';
+    return 'n_create';
+  }
+
+  renderVals() {
+    const s = this.state, P = this.PAL, A = P.accent;
+    const pixOn = this.props.pixelMotif !== false;
+    const showProv = this.props.showProvenance !== false;
+    const showEdgeLabels = this.props.edgeLabels !== false;
+
+    const cardData = (id)=> this.CARDS[id] || { title:(this.FOCUS[id]&&this.FOCUS[id].barLabel)||id, badges:['JavaScript'], sections:[
+      { h:'这段在做什么', b:'选中的代码片段。真实产品里这里是实时调用 AI 生成的逐行解释——讲清它是什么语法、逻辑怎么走、在上下文里起什么作用。' },
+      { h:'换个角度', b:'同一焦点上按 ⌥2 看谁调用它、⌥3 看执行路径、⌥4 看它在架构里的位置。' }
+    ], links:[] };
+
+    // tree
+    const T = [];
+    const row = (name,depth,opts)=>{ opts=opts||{}; T.push({
+      name, pad: 8+depth*15, cursor: opts.fid?'pointer':'default',
+      onClick: opts.fid ? ()=>{ if (this.FOCUS[opts.fid] && this.FOCUS[opts.fid].codeFile) this.switchTab(this.FOCUS[opts.fid].codeFile); else this.setFocus(opts.fid, false); } : ()=>{},
+      dot: opts.dir ? P.text4 : P.text3,
+      dotR: opts.dir ? '1px' : '50%',
+      bg: opts.active ? P.hover : 'transparent',
+      ring: opts.active ? ('inset 2px 0 0 '+A) : 'none',
+      color: opts.active ? P.text : P.text2,
+      weight: opts.active ? '600' : '400'
+    }); };
+    row('glint-api',0,{dir:true});
+    row('src',1,{dir:true});
+    row('index.js',2,{fid:'file:index', active: s.activeFileId==='index'});
+    row('routes',2,{dir:true});
+    row('auth.js',3,{fid:'file:authRoute'});
+    row('orders.js',3,{fid:'file:orders', active: s.activeFileId==='orders'});
+    row('services',2,{dir:true});
+    row('authService.js',3,{fid:'file:authService'});
+    row('orderService.js',3,{fid:'file:orderService', active: s.activeFileId==='orderService'});
+    row('db',2,{dir:true});
+    row('index.js',3,{fid:'file:dbIndex'});
+    row('models.js',3,{fid:'file:models'});
+    row('middleware',2,{dir:true});
+    row('session.js',3,{fid:'file:session'});
+    row('utils',2,{dir:true});
+    row('logger.js',3,{fid:'file:logger'});
+    row('package.json',1,{fid:'file:pkg'});
+
+    // tabs
+    const tabs = ['orderService','orders','index'].map(id=>{
+      const active = s.activeFileId===id;
+      return { name:this.TABMETA[id].name, dot:active?P.text2:P.text4, onClick:()=>this.switchTab(id),
+        color: active?P.text:P.text3, bg: active?P.surface:P.bgSub, bar: active? A :'transparent' };
+    });
+
+    // rows
+    const focus = this.FOCUS[s.focusId];
+    const selSet = (focus && focus.fileId===s.activeFileId && focus.lines) ? new Set(focus.lines) : new Set();
+    const rows = this.FILES[s.activeFileId].rows.map(r=>{
+      const sel = selSet.has(r.lineNo);
+      return { lineNo:r.lineNo, tokens:r.tokens,
+        bg: sel ? 'rgba(46,76,255,0.10)' : 'transparent', bar: sel ? A : 'transparent',
+        numColor: sel ? P.text2 : P.text4, onClick:()=>this.selectLine(r.lineNo) };
+    });
+
+    // focus bar
+    const focusLabel = (focus && focus.barLabel) || s.focusId;
+    const focusProv = this.provOf(s.focusId);
+    const dimLabels = ['为什么','谁调用','怎么执行','在哪'];
+    const dimTitles = ['为什么这么写（就近浮卡）','谁调用它（调用关系图）','执行路径（流程时序）','在架构哪个位置（Treemap）'];
+    const dims = [1,2,3,4].map(n=>{
+      const active = n===1 ? (s.cardOpen && s.card && s.card.focusId===s.focusId) : (s.dockOpen && s.dockTab===n);
+      return { n, label:dimLabels[n-1], title:dimTitles[n-1], onClick:()=>this.openDim(n),
+        bg: active ? A : P.elev, color: active ? P.accentFg : P.text2,
+        border: active ? A : P.border,
+        shadow: active ? '0 0 0 1px rgba(46,76,255,0.4)' : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+        kbdBg: active ? 'rgba(255,255,255,0.20)' : P.bgSub,
+        kbdColor: active ? P.accentFg : P.text3 };
+    });
+
+    // card
+    let card = { show:false };
+    if (s.card && s.cardOpen) {
+      const cf = this.FOCUS[s.card.focusId];
+      const data = cardData(s.card.focusId);
+      let top=16, left=54;
+      if (cf && cf.fileId===s.activeFileId && cf.lines) { top = 8 + Math.max.apply(null,cf.lines)*24 + 8; }
+      const prov = this.provOf(s.card.focusId);
+      const links = (data.links||[]).map(l=>({ t:l.t, onClick:()=>{ if (l.focus) this.setFocus(l.focus, false); const d=l.dim||1; setTimeout(()=>this.openDim(d),0); } }));
+      card = { show:true, top, left, kind:this.kindOf(s.card.focusId), prov,
+        title:data.title, badges:data.badges||[], sections:data.sections||[],
+        links, hasLinks: links.length>0, onClose:()=>this.escClose() };
+    }
+
+    // trajectory → breadcrumb drill path (file › focus › focus › current)
+    const lensOf = (s.cardOpen && s.card && s.card.focusId===s.focusId) ? 1 : (s.dockOpen ? s.dockTab : 1);
+    const fileName = (this.TABMETA[s.activeFileId] || {}).name || s.activeFileId;
+    const crumbs = [];
+    crumbs.push({ sep:false, showKey:false, hasClose:false, weight:'400',
+      dim:'', keyLabel:'', keyColor:P.text3, keyBg:P.elev, keyBorder:P.borderStrong,
+      label:fileName, labelColor:P.text2, bg:P.surface, border:P.border, shadow:'none',
+      onClick:()=>this.switchTab(s.activeFileId) });
+    const past = s.trajectory.map((t,i)=>({ t, i }));
+    past.reverse();
+    past.forEach(({t,i})=>{
+      const f = this.FOCUS[t.focusId];
+      crumbs.push({ sep:true, showKey:true, hasClose:true, weight:'400',
+        dim:t.dim, keyLabel:'⌥'+t.dim, keyColor:P.text3, keyBg:P.elev, keyBorder:P.borderStrong,
+        label:(f&&f.tagLabel)||t.focusId, labelColor:P.text2, bg:P.surface, border:P.border, shadow:'none',
+        onClose:(e)=>{ if(e&&e.stopPropagation)e.stopPropagation(); this.closeTag(i); },
+        onClick:()=>this.reopenTag(t.focusId) });
+    });
+    crumbs.push({ sep: crumbs.length>0, showKey:true, hasClose:false, weight:'600',
+      dim:lensOf, keyLabel:'⌥'+lensOf, keyColor:P.accentFg, keyBg:P.accent, keyBorder:P.accent,
+      label:focusLabel, labelColor:P.text, bg:this.hexA(P.accent,0.12), border:this.hexA(P.accent,0.55),
+      shadow:'inset 0 1px 0 rgba(255,255,255,0.06)', onClick:()=>this.openDim(1) });
+
+    // dock tabs
+    const dockMeta = [[2,'调用关系'],[3,'执行路径'],[4,'架构鸟瞰']];
+    const dockTabs = dockMeta.map(([n,label])=>{
+      const active=s.dockTab===n;
+      return { n, label, onClick:()=>this.openDim(n),
+        color: active?P.text:P.text3, bg: active?P.surface:'transparent', bar: active?A:'transparent',
+        kbdBg:P.bgSub, kbdColor: active?P.accentText:P.text4, railColor: active?A:P.text3 };
+    });
+
+    // graph (neutral nodes; focus = accent)
+    const hi = this.hiNode(s.focusId);
+    const nmap = {}; this.GNODES.forEach(n=>nmap[n.id]=n);
+    const gnodes = this.GNODES.map(n=>{ const on=n.id===hi; return {
+      x:n.x, y:n.y, w:n.w, h:n.h, label:n.label, sub:n.sub,
+      color: on ? A : P.borderStrong,
+      bg: on ? 'rgba(46,76,255,0.10)' : P.elev,
+      ring: on ? ('1px solid '+A) : ('1px solid '+P.border),
+      onClick:()=>this.setFocus(n.focusId, true) };
+    });
+    const gedges = this.GEDGES.map(e=>{
+      const a=nmap[e[0]], b=nmap[e[1]];
+      const ca={x:a.x+a.w/2,y:a.y+a.h/2}, cb={x:b.x+b.w/2,y:b.y+b.h/2};
+      const dx=cb.x-ca.x, dy=cb.y-ca.y, L=Math.hypot(dx,dy)||1, ux=dx/L, uy=dy/L;
+      const sx=ca.x+ux*(a.h/2+8), sy=ca.y+uy*(a.h/2+8);
+      const ex=cb.x-ux*(b.h/2+12), ey=cb.y-uy*(b.h/2+12);
+      const on = e[0]===hi || e[1]===hi;
+      return { d:'M '+sx.toFixed(1)+' '+sy.toFixed(1)+' L '+ex.toFixed(1)+' '+ey.toFixed(1),
+        stroke: on?A:P.text4, sw: on?2:1.25, op: on?1:0.8,
+        marker: on?'url(#garh)':'url(#gar)',
+        mx:((sx+ex)/2).toFixed(1), my:((sy+ey)/2).toFixed(1), label:e[2],
+        lblColor: on? P.accentText : P.text2, lblBorder: on? this.hexA(P.accent,0.5) : P.border,
+        onEnter:()=>this.setState({hoverEdge:e[2]}), onLeave:()=>this.setState({hoverEdge:null}) };
+    });
+    const caption = s.hoverEdge || 'createOrder 是订单模块的核心：被路由调用，向下编排会话、库存与落库。悬停连线看每条关系的含义，点节点继续下钻。';
+
+    // exec (neutral lanes; structure via labels not color)
+    const exec = this.EXEC.map(x=>({ lane:x.lane, title:x.title, sub:x.sub, loop:!!x.loop,
+      dotBg:P.elev, dotBorder:P.borderStrong }));
+
+    // treemap (neutral lightness; focus = accent)
+    const hiFile = s.focusId.indexOf('file:')===0 ? s.focusId.slice(5) : 'orderService';
+    const treemap = this.TREE_MODULES.map(m=>({ name:m.name, w:m.w,
+      files: m.files.map(f=>{ const on=f[0]===hiFile; return {
+        name:f[1], w:f[2], tag:f[3], weight: on?'600':'400',
+        nameColor: on?P.text:P.text2,
+        bg: on ? 'rgba(46,76,255,0.10)' : P.elev,
+        ring: on ? ('1px solid '+A) : ('1px solid '+P.border),
+        onClick:()=>this.setFocus('file:'+f[0], true) };
+      }) }));
+
+    const lay = {
+      leftS: s.treeOpen ? P.text : P.text4, leftF: s.treeOpen ? 'rgba(162,169,180,0.55)' : 'transparent',
+      botS: s.bottomOpen ? P.text : P.text4, botF: s.bottomOpen ? 'rgba(162,169,180,0.55)' : 'transparent',
+      rightS: s.dockOpen ? P.text : P.text4, rightF: s.dockOpen ? 'rgba(162,169,180,0.55)' : 'transparent'
+    };
+    return {
+      pixOn, showProv, showEdgeLabels,
+      treeOpen: s.treeOpen, treeClosed: !s.treeOpen, toggleTree:()=>this.toggleTree(),
+      bottomOpen: s.bottomOpen, toggleBottom:()=>this.toggleBottom(), lay,
+      tree:T, tabs, rows,
+      focusLabel, focusProv, dims, hintOpen: s.hintOpen,
+      card,
+      crumbs, trajHas: s.trajectory.length>0, trajClear:()=>this.clearTraj(),
+      dockOpen: s.dockOpen, dockClosed: !s.dockOpen, toggleDock:()=>this.toggleDock(), dockTabs,
+      isCall: s.dockTab===2, isExec: s.dockTab===3, isArch: s.dockTab===4,
+      graph:{ nodes:gnodes, edges:gedges, caption }, exec,
+      stack:this.STACK, treemap
+    };
+  }
+}
+</script>
+</body>
+</html>

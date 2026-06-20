@@ -2,13 +2,13 @@
 
 | 项目 | 内容 |
 | --- | --- |
-| 版本 | v0.2（实现级：核心交互 / 预理解管线 / 技术栈认知 / Agent Bar 全展开） |
+| 版本 | v0.3（前端布局对齐设计稿：INSIGHT 三 Tab + 底部轨迹条 + 来源标签 + 维度文案） |
 | 状态 | 可执行 · 随 PRD/Spec 演进 |
 | 最后更新 | 2026-06-20 |
 | 关联 | 《Glint-PRD.md》v0.7 ·《Glint-技术Spec.md》v0.6 ·《design-system/Glint-Design-System.md》 |
 | 执行者 | 使用者本人 或 AI 编码 agent |
 
-> 本手册把 PRD/Spec **翻成可直接照着写代码的施工图**：给状态模型、组件树、关键伪代码、完整契约。设计稿由使用者另出，前端统一消费 Design System 令牌。
+> 本手册把 PRD/Spec **翻成可直接照着写代码的施工图**：给状态模型、组件树、关键伪代码、完整契约。**前端布局/组件已按设计稿对齐**（设计稿归档 `design-system/design/`，完整视觉规范见 Design System §15），前端统一消费 Design System 令牌。
 
 ---
 
@@ -77,8 +77,13 @@ glint/
 
 ## 3. 前端骨架与状态（先搭这层，后面所有交互挂上去）
 
-### 3.1 布局骨架
-`app/(ui)/page.tsx` ＝ `<EdgeBar/>`（最左竖向图标栏：项目/文件树/搜索/技术栈/Agent/轨迹/设置）＋ `<Sidebar/>`（可收起，渲染当前 Edge 入口对应面板）＋ `<DockLayout/>`（Dockview：代码 / ⌥2 / ⌥3 / ⌥4 各为可停靠面板）＋ `<FloatingLayer/>`（⌥1 浮卡 + 轨迹，绝对定位，不占面板）。
+### 3.1 布局骨架（依据设计稿；完整规范见 Design System §15）
+`app/(ui)/page.tsx` 自上而下：
+- `<TopBar/>`：▲GLINT + 文件/编辑/视图/运行 + 居中项目路径 + 右侧四维键帽 ⌥1–⌥4。
+- 主体三栏：`<EdgeBar/>`（最左竖向图标）+ `<Sidebar/>`（EXPLORER 文件树等，可收起）；中部 `<EditorArea/>` ＝ 文件标签页 + `<FocusBar/>`（焦点 + **来源标签** provenance）+ `<DimensionSwitcher/>`（**⌥1 为什么 / ⌥2 谁调用 / ⌥3 怎么执行 / ⌥4 在哪**）+ 代码 + `<FloatingCard/>`（⌥1 浮卡，覆盖层）；右侧 `<InsightPanel/>` ＝ **单面板 + ⌥2/⌥3/⌥4 三 Tab**（调用关系 / 执行路径 / 架构鸟瞰），切 Tab 不切焦点。
+- 底部：`<TrajectoryBar/>`（理解轨迹面包屑，点击跳转，Clear/Esc）+ `<StatusBar/>`（分支/错误/语言/编码）。
+
+> **据设计稿的两处结构修正**（覆盖旧描述）：① ⌥2/⌥3/⌥4 不是三个独立 Dockview 面板，而是**右侧一个 INSIGHT 面板里的三 Tab**（store 用 `insightTab:'call'|'flow'|'arch'`）；② 轨迹不在浮层，而是**底部 TrajectoryBar 横条**。`<FloatingLayer/>` 只放 ⌥1 浮卡。
 
 ### 3.2 Zustand stores（前端真相源）
 ```ts
@@ -448,6 +453,7 @@ export const api: GlintApi = process.env.NEXT_PUBLIC_API_MODE==='real' ? realApi
 
 | 版本 | 日期 | 摘要 |
 | --- | --- | --- |
+| v0.3 | 2026-06-20 | 前端布局对齐设计稿：TopBar / FocusBar(来源标签) / DimensionSwitcher(为什么·谁调用·怎么执行·在哪) / INSIGHT 三 Tab 合一 / 底部 TrajectoryBar / StatusBar；指向 Design System §15 |
 | v0.2 | 2026-06-20 | 实现级：核心交互 / 预理解管线 / 技术栈 / Agent Bar 全展开 + 完整契约 + 伪代码 |
 | v0.1 | 2026-06-20 | 首版：契约优先 + 前端 mock 先行 + M0–M4 步骤与 DoD |
 

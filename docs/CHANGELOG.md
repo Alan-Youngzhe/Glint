@@ -2,7 +2,14 @@
 
 记录 PRD / 技术 Spec / Design System / 施工手册 文档的版本演进。
 
-## 施工手册 V2（二期）— 2026-06-20（当前）
+## 前端设计稿落地 — 2026-06-20（当前）
+- **设计稿归档** `design-system/design/`（3 张 IDE 主界面图 + 组件特写 + mood board + 可交互原型 `Glint.dc.html`）。
+- **Design System v0.2**：新增 §15「界面布局与设计落地」——总体布局、四维用户文案（为什么/谁调用/怎么执行/在哪）、**来源标签 provenance**、⌥1 浮卡 / **INSIGHT 三 Tab 合一** / **底部 TrajectoryBar** / 状态栏规范。
+- **施工手册 v0.3**：§3 布局对齐设计稿（TopBar / FocusBar / 维度切换条 / INSIGHT 三 Tab / 底部轨迹条 / StatusBar），修正旧版「⌥2-4 三独立面板 + 轨迹放浮层」。
+- **施工手册 V2 v1.1**：二期前端面板对齐设计稿。
+- **PRD v0.8**：维度用户文案、INSIGHT 三 Tab、来源标签、底部轨迹条落定；开放问题 #2（轨迹位置）、#3（⌥2-4 面板形态）据设计定案。
+
+## 施工手册 V2（二期）— 2026-06-20
 - 新增《Glint-施工手册-V2.md》：二期工程施工手册，承接一期已落地的 M0 代码，覆盖 **M1 导入与浏览 + M2 预理解/架构/技术栈**；含一期现状盘点、契约与 schema 增量、真实 API 翻新顺序、Edge bar/Sidebar 补齐、DoD/风险、三期预告。
 - 确立**期次切分**：一期 = M0（已落代码）；二期 = M1+M2（本手册，少依赖设计稿）；三期 = M3 四维交互 + Agent Bar（待设计稿，另出 V3）。
 - 一期工程状态记录：仓库已落 Next.js+Dockview 骨架、`types/contract.ts`、`lib/ai`、`lib/api`(mock/real)、`db/schema.prisma`（至 v0.5 级）、`styles/tokens.css`、`fixtures/`、`/api/test`。
