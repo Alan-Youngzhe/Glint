@@ -103,6 +103,12 @@ enum TechKind {
   datastore
 }
 
+enum AgentRole {
+  user
+  assistant
+  tool
+}
+
 // ── 5.1 项目与文件 ──
 model User {
   id        String    @id @default(cuid())
@@ -475,4 +481,36 @@ model TechLiteracy {
   createdAt         DateTime @default(now()) @map("created_at")
 
   @@map("tech_literacy")
+}
+
+// ── Agent 会话（三期 · V3 §4）──
+model AgentSession {
+  id        String         @id @default(cuid())
+  userId    String         @map("user_id")
+  projectId String         @map("project_id")
+  title     String?
+  createdAt DateTime       @default(now()) @map("created_at")
+  messages  AgentMessage[]
+
+  @@index([userId, projectId])
+  @@map("agent_sessions")
+}
+
+model AgentMessage {
+  id          String    @id @default(cuid())
+  sessionId   String    @map("session_id")
+  role        AgentRole
+  content     String
+  citations   Json?
+  actions     Json?
+  suggestions Json?
+  toolCalls   Json?     @map("tool_calls")
+  tokens      Int       @default(0)
+  costUsd     Float     @default(0) @map("cost_usd")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  session AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("agent_messages")
 }
