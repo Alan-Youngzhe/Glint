@@ -49,6 +49,24 @@ export async function runTask(
   return res;
 }
 
+/**
+ * 安全调用：无 key 或调用失败时返回 null（不抛错），供预理解/技术栈认知降级。
+ * 确定性骨架不依赖它；它只负责"补人话"。
+ */
+export async function runTaskSafe(
+  profile: TaskProfile,
+  messages: LLMMessage[],
+  overrides: Partial<LLMRequest> = {},
+): Promise<string | null> {
+  try {
+    const res = await runTask(profile, messages, overrides);
+    return res.text;
+  } catch (e) {
+    console.warn(`[ai] runTaskSafe(${profile}) 降级:`, e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
 export { PROFILES, recordUsage };
 export { usageSummary } from "./usage";
 export type {
