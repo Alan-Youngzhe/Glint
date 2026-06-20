@@ -28,6 +28,7 @@
     "clsx": "^2.1.1",
     "codemirror": "^6.0.2",
     "d3-hierarchy": "^3.1.2",
+    "dagre": "^0.8.5",
     "dockview": "^4.2.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.469.0",
@@ -35,6 +36,7 @@
     "openai": "^4.79.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "reactflow": "^11.11.4",
     "tailwind-merge": "^2.6.0",
     "tree-sitter-wasms": "^0.1.13",
     "web-tree-sitter": "^0.20.8",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@types/d3-hierarchy": "^3.1.7",
+    "@types/dagre": "^0.7.54",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
