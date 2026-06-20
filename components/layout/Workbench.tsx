@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { ThemeToggle, type Theme } from "./ThemeToggle";
+import { ProjectBar } from "@/components/shell/ProjectBar";
 
 const DockShell = dynamic(
   () => import("./DockShell").then((m) => m.DockShell),
@@ -54,13 +55,11 @@ export function Workbench() {
   return (
     <div className="flex h-screen flex-col bg-bg text-text">
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-4">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-center gap-3">
           <span className="font-pixel text-pixel-label uppercase tracking-wide text-accent-text">
             Glint
           </span>
-          <span className="text-caption text-text-tertiary">
-            选中 · 按 ⌥ · 即得理解
-          </span>
+          <ProjectBar />
         </div>
 
         <div className="flex items-center gap-4">

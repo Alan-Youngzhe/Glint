@@ -8,18 +8,19 @@ export interface CodeSelection {
 }
 
 interface WorkspaceState {
-  /** MVP 单项目，mock 阶段固定 "demo"。 */
-  projectId: string;
+  projectId: string | null;
   activeFilePath: string | null;
   selection: CodeSelection | null;
+  setProject: (id: string) => void;
   setActiveFile: (path: string) => void;
   setSelection: (sel: CodeSelection | null) => void;
 }
 
 export const useWorkspace = create<WorkspaceState>((set) => ({
-  projectId: "demo",
-  activeFilePath: "auth/guard.ts",
+  projectId: null,
+  activeFilePath: null,
   selection: null,
+  setProject: (id) => set({ projectId: id, activeFilePath: null, selection: null }),
   setActiveFile: (path) => set({ activeFilePath: path, selection: null }),
   setSelection: (selection) => set({ selection }),
 }));

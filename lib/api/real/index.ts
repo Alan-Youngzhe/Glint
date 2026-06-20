@@ -1,18 +1,11 @@
 /**
  * real 实现：fetch /api/*（施工手册 §10）。
- * 后端某接口就绪即在此把该方法接上；尚未实现的暂时复用 mock，保证前端不阻塞。
+ * 翻新顺序 tree → file → architecture → techstack…：已接通的走真实 fetch，
+ * 未接通的暂回退到 mock，保证前端不阻塞、组件无需改动。
  */
 import type { GlintApi } from "@/lib/api";
-import type {
-  ArchitecturePayload,
-  FileContent,
-  InteractionEvent,
-  TechItem,
-  TechLiteracy,
-  TreeNode,
-  UnderstandRequest,
-  UnderstandResponse,
-} from "@/types/contract";
+import type { FileContent, TreeNode } from "@/types/contract";
+import { mockApi } from "@/lib/api/mock";
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -20,17 +13,8 @@ async function getJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`${url} -> ${res.status}`);
-  return res.json() as Promise<T>;
-}
-
 export const realApi: GlintApi = {
+  // ── 已接通（M1）──
   tree(projectId) {
     return getJson<TreeNode>(`/api/projects/${projectId}/tree`);
   },
@@ -39,25 +23,12 @@ export const realApi: GlintApi = {
       `/api/projects/${projectId}/files?path=${encodeURIComponent(path)}`,
     );
   },
-  understand(req: UnderstandRequest) {
-    return postJson<UnderstandResponse>("/api/understand", req);
-  },
-  architecture(projectId) {
-    return getJson<ArchitecturePayload>(
-      `/api/projects/${projectId}/architecture`,
-    );
-  },
-  techstack(projectId) {
-    return getJson<TechItem[]>(`/api/projects/${projectId}/techstack`);
-  },
-  tech(slug) {
-    return getJson<TechLiteracy>(`/api/tech/${encodeURIComponent(slug)}`);
-  },
-  async logEvents(events: InteractionEvent[]) {
-    await fetch("/api/events", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ events }),
-    });
-  },
+
+  // ── 未接通：回退 mock（architecture/techstack=M2，understand=M3）──
+  understand: mockApi.understand,
+  understandStream: mockApi.understandStream,
+  architecture: mockApi.architecture,
+  techstack: mockApi.techstack,
+  tech: mockApi.tech,
+  logEvents: mockApi.logEvents,
 };

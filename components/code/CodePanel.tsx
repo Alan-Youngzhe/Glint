@@ -29,7 +29,7 @@ export function CodePanel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hostRef.current || !activeFilePath) return;
+    if (!hostRef.current || !activeFilePath || !projectId) return;
     let alive = true;
 
     api
