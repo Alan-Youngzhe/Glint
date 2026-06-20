@@ -150,12 +150,60 @@ export interface FileContent {
 
 // ===== 交互事件（成长分析信号） =====
 export interface InteractionEvent {
-  action: "select" | "dim1" | "dim2" | "dim3" | "dim4" | "drill" | "recall";
+  action:
+    | "select"
+    | "dim1"
+    | "dim2"
+    | "dim3"
+    | "dim4"
+    | "drill"
+    | "recall"
+    | "agent";
   focusType: FocusType;
   focusRef: string;
   level?: "arch" | "module" | "code";
   dwellMs?: number;
   ts: string;
+}
+
+// ===== UI 动作（Option 与 Agent 共用，V3 §6.8 / §7.3） =====
+export type UIAction =
+  | { kind: "open_panel"; panel: "call" | "flow" | "arch" | "techstack" | "agent" }
+  | { kind: "focus"; focus: Focus }
+  | { kind: "highlight"; panel: string; nodeIds: string[] }
+  | { kind: "trigger_dimension"; focus: Focus; dimension: Dimension };
+
+// ===== Agent Bar 流式事件 =====
+export interface Citation {
+  label: string;
+  ref: string;
+  kind: "file" | "symbol" | "node";
+}
+export interface Suggestion {
+  text: string;
+  action?: UIAction;
+}
+export type AgentEvent =
+  | { type: "token"; delta: string }
+  | { type: "citation"; citation: Citation }
+  | { type: "action"; action: UIAction }
+  | { type: "suggestion"; suggestions: Suggestion[] }
+  | { type: "done"; messageId: string };
+export interface AgentRequest {
+  projectId: string;
+  sessionId?: string;
+  message: string;
+}
+
+/** 来源标签（DS §15.3）：把 CardPayload.source 映射成给小白的信任/成本信号。 */
+export function provenanceLabel(s: CardPayload["source"]): string {
+  return {
+    realtime: "实时 · 调 AI 解释",
+    file_summaries: "预生成 · 库内直读",
+    modules: "预生成 · 库内直读",
+    ast: "AST · 确定",
+    symbol_card: "懒生成 · 已缓存",
+  }[s];
 }
 
 // ===== ⌥1 选中代码的流式增量（SSE） =====

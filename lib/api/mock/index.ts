@@ -77,6 +77,19 @@ export const mockApi: GlintApi = {
     return t;
   },
 
+  async *agent(req) {
+    const reply = `（mock Agent）已收到："${req.message}"。真实编排在三期接通。`;
+    for (const ch of reply) {
+      await delay(10);
+      yield { type: "token" as const, delta: ch };
+    }
+    yield {
+      type: "suggestion" as const,
+      suggestions: [{ text: "看看项目架构", action: { kind: "open_panel", panel: "arch" } }],
+    };
+    yield { type: "done" as const, messageId: "mock" };
+  },
+
   async logEvents(events): Promise<void> {
     if (process.env.NODE_ENV !== "production") {
       // eslint-disable-next-line no-console

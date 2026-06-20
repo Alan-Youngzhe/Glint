@@ -41,8 +41,9 @@ export const realApi: GlintApi = {
     return getJson<ArchitecturePayload>(`/api/projects/${projectId}/architecture`);
   },
 
-  // ── 未接通：回退 mock（understand=M3）──
+  // ── 未接通：回退 mock（三期内接通）──
   understand: mockApi.understand,
   understandStream: mockApi.understandStream,
+  agent: mockApi.agent,
   logEvents: mockApi.logEvents,
 };

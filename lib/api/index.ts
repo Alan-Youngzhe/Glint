@@ -4,6 +4,8 @@
  * 集成时按 NEXT_PUBLIC_API_MODE 切换（或逐方法在 real 内回退到 mock）。
  */
 import type {
+  AgentEvent,
+  AgentRequest,
   ArchitecturePayload,
   CardPayload,
   FileContent,
@@ -26,10 +28,13 @@ export interface GlintApi {
   architecture(projectId: string): Promise<ArchitecturePayload>;
   techstack(projectId: string): Promise<TechItem[]>;
   tech(slug: string): Promise<TechLiteracy>;
+  agent(req: AgentRequest): AsyncIterable<AgentEvent>;
   logEvents(events: InteractionEvent[]): Promise<void>;
 }
 
 export type {
+  AgentEvent,
+  AgentRequest,
   ArchitecturePayload,
   CardPayload,
   FileContent,
