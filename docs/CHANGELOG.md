@@ -2,11 +2,21 @@
 
 记录 PRD / 技术 Spec / Design System 文档的版本演进。
 
+## v0.7 — 2026-06-19（当前）
+- PRD/Spec：新增 **Agent Bar**（开放式探索，P0）——可停靠/可收起面板，能力为「读 + 驱动界面 + 主动建议」；编排 Agent + 工具集 + SSE（token/citation/action/suggestion）；`agent_sessions/agent_messages`、`/api/agent`。
+- Spec：加深预生成的 **模块关系推断**（§4.2）——关系骨架来自 `call_edges/import` 确定性聚合，模型只补语义（"把架构-模块关系理解到"的落地）。
+- 施工手册升 **v0.2（实现级）**：核心交互（焦点解析 / Option 派发 / 四维渲染 / 浮卡生命周期 / 轨迹状态机 / 钻取 / UI-action 调度器）、预理解管线、技术栈认知、Agent Bar 全展开 + 完整契约类型 + 伪代码。
+
+## v0.6 — 2026-06-19
+- PRD：新增 **Edge bar + 可收起侧栏** 导航骨架（§5.5）。
+- PRD/Spec：新增「**技术栈认知**」能力——清单/扩展名确定性检测语言/框架/库；逐项解释「是什么 / 用途 / 在整个代码体系中的位置」（全局跨项目缓存、近乎免费）+「在本仓库的角色与关键位置」（预生成），Edge bar 面板 + ⌥4 联动。
+- Spec：新增 §4.10、`tech_stack_items` 与全局 `tech_literacy` 表、`/techstack`·`/tech/:slug` API、前端 Edge bar 与技术栈面板。
+
 ## Design System v0.1 — 2026-06-19
 - 新增完整《design-system/Glint-Design-System.md》：暗色优先（Linear 风）+ 浅色两套；电蓝×黑灰、全局唯一强调色；Inter + JetBrains Mono + 像素点阵字；间距/圆角/描边/阴影/运动令牌；Linear 风组件规范；图谱 dagre/ELK 分层布局 + 实心节点（参考 Sourcetrail/Graphite）；可访问性与令牌总表。
 - 调性定稿：弃用早先「Bifrost 暖色 Riso」，改为电蓝×黑灰·Linear 风·像素点缀；PRD §5.4 与 Spec §2.1/§8 同步对齐。
 
-## v0.5 — 2026-06-19（当前）
+## v0.5 — 2026-06-19
 - 产品定名 **Glint**（曾用名：代码理解工具 → Thinkode → Glint）。
 - 核心交互改为「选中 + Option 数字键」四维理解：⌥1 为什么这么写 / ⌥2 调用关系 / ⌥3 执行路径 / ⌥4 架构，同一焦点瞬时切换。
 - 卡片固定停留 + 收纳成「理解轨迹」标签，取代旧版 Space 钉住。

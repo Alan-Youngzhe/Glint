@@ -3,13 +3,15 @@
 | 项目 | 内容 |
 | --- | --- |
 | 产品名称 | **Glint**（旧草稿 Thinkode 一律以 Glint 为准） |
-| 文档版本 | v0.5 |
+| 文档版本 | v0.6（技术栈认知 + Agent Bar + 模块关系加深） |
 | 状态 | 草稿 · 待评审 |
 | 最后更新 | 2026-06-19 |
 | 关联文档 | 《Glint-PRD.md》 |
 | 研究依据 | Gao et al., arXiv:2504.04553v2（CodeMap） |
 | 适用阶段 | 个人自用 MVP（主链路）+ 为 P1/P2 预留扩展 |
 
+> v0.6 变更：① 技术栈检测与认知（§4.10、`tech_stack_items`/`tech_literacy`、API、Edge bar 面板）；② **Agent Bar 编排 Agent**（§4.11、`agent_sessions/messages`、`/api/agent`、前端面板，§8）；③ 加深预生成的**模块关系推断**（§4.2）；④ 布局骨架补 Edge bar + 侧栏（§8）。
+>
 > v0.5 变更：① 改名 Glint；② 核心交互改为 **选中 + Option 数字键（⌥1/⌥2/⌥3/⌥4 四维理解）**，删除旧的"Option 悬停 + Space 钉住"；③ 新增**理解轨迹**（卡片收纳为标签）；④ 布局改为 **VS Code 式可停靠多面板**（Dockview/rc-dock），⌥1 浮卡、⌥2/⌥3 React Flow 面板、⌥4 Treemap 面板；⑤ 数据/API/里程碑相应调整。保留预生成 map-reduce、迭代精修 + 文件名/数量校验、成本分层、模型分层、AI 抽象层、概念标签、RAG(P1)。
 
 ---
@@ -145,7 +147,7 @@ flowchart TB
 
 **Map · 文件级角色卡片**（廉价模型 + 批处理 + 缓存）：职责、关键导出符号、依赖、在所属模块/业务中的角色（供 ⌥1 文件焦点直读），写 `file_summaries`。
 
-**Reduce · 模块级**：聚类文件卡片 → 模块职责、边界、对外依赖、**业务定位与"为什么这样组织"**（供 ⌥1 模块焦点直读、⌥3 业务叙述），写 `modules`。
+**Reduce · 模块级（含模块关系推断 — "把架构-模块关系理解到"的核心）**：① 按目录/包边界 + `call_edges`/`import` 聚类成模块；② **把符号级调用/依赖向上汇聚成模块间关系**——谁依赖谁、数据往哪流、谁是入口（确定性，来自 call_edges/import 的聚合，不靠模型猜）；③ 在确定的关系骨架上用模型补**职责、业务定位、"为什么这样组织"、与其他模块关系的一句话说明**。写 `modules`（关系存 `depends_on` + `edge_explanations`），供 ⌥1 模块焦点直读、⌥2/⌥4 模块视图、⌥3 业务叙述。
 
 **Reduce · 架构级**（中等模型，只读摘要）：架构概述、技术栈/框架及关系，写 `project_analysis`。
 
@@ -206,6 +208,28 @@ flowchart TB
 
 **量级估算（仅设预期）。** 约 1000 源文件、文件卡片走廉价档（Haiku 4.5 ≈ $1/$5，或 GPT‑5.4 nano ≈ $0.2/$1.25），叠加批处理+缓存，全量预生成大致 **个位数人民币到十几元**；结构迭代每轮只在摘要/结构上跑，增量小。⌥1 实时解释每次几美分。⌥1 文件/模块/变量、⌥2 结构、⌥4 走直读/AST，**几乎不产生 token 成本**。以实际计量为准，软上限兜底。
 
+### 4.10 技术栈检测与认知（Tech Stack）
+
+**检测（确定性）。** 导入索引阶段从**清单与扩展名**识别语言/框架/库：解析 `package.json`/`requirements.txt`/`go.mod`/`Gemfile`/`pom.xml` 等依赖清单 + 文件后缀 + 关键配置文件，写 `tech_stack_items`。可数事实可信，不靠模型猜。
+
+**认知卡片三段。** 「是什么 / 用途 / 在整个代码体系中的位置」是**项目无关的通用知识**，按技术 `slug` 存入**全局** `tech_literacy` 缓存——`jQuery` 是什么对所有项目都一样，**全平台缓存一次、近乎免费**（首次未命中才调一次廉价模型）。「在本仓库的角色与关键位置」来自预生成的 `project_analysis` + `structure_nodes` + `symbol_refs`（哪里 import/使用），可跳转使用处。
+
+**与 ⌥4 联动。** 技术项 ↔ 架构 Treemap 互跳；顺使用处接 ⌥2/⌥3 看具体联系。Edge bar「技术栈」面板是此能力的入口（前端见 §8）。
+
+### 4.11 Agent Bar（开放式探索 · 编排 Agent）
+
+四维派发解决"对当前焦点的结构化理解"；Agent Bar 解决**跨焦点、开放式**问题。后端一个**编排 Agent**（工具调用循环）：
+
+**工具集（Agent 可调用）。** ① `retrieve`：全量 RAG（pgvector + 关键词）召回相关代码块/文件/模块摘要（依赖 F24/`code_chunks`；P1 落地前先用 symbol/结构检索兜底）；② `symbols / callgraph / refs`：查符号、调用子图、引用（确定性）；③ `dimension(focus, k)`：像工具一样复用既有四维服务触发 ⌥1–⌥4；④ `structure / techstack`：读架构与技术栈。
+
+**循环。** 规划 → 调用工具 → 观察 → 必要时再调 → 综合答案。**SSE 流式**输出五类事件：`token`（增量文本）、`citation`（文件/符号/节点引用）、`action`（界面动作）、`suggestion`（探索建议）、`done`。
+
+**驱动界面（action）。** Agent 产出结构化动作让前端执行：`open_panel` / `focus`（跳焦点）/ `highlight`（图上高亮节点/边）/ `trigger_dimension`（替用户触发某 ⌥）。导航类即时执行；写/副作用类需二次确认（本阶段基本无写操作）。
+
+**主动建议（suggestion）。** 答完给"接下来看哪 / 可能漏了什么"，每条带可点 action。
+
+**记录与成本。** 会话写 `agent_sessions/agent_messages`；产生的探索动作同样进 `interaction_events`（成长信号）。模型档：规划/综合用中等档；工具内子调用按各自 TaskProfile（多为直读/缓存，成本可控）。
+
 ---
 
 ## 5. 数据模型与存储
@@ -227,9 +251,11 @@ flowchart TB
 **structure_nodes**(id, project_id, parent_id, kind[dir|file|module], name, rel_path, module_id?, loc, size_bytes) — ⌥4 Treemap 数据。
 **edge_explanations**(id, project_id, source_ref, target_ref, relation_type, nl_explanation, model, created_at) — ⌥2 连线自然语言（缓存）。
 **structure_iterations**(id, project_id, round, accuracy, missing_files jsonb, extra_files jsonb, created_at) — 迭代+校验审计。
+**tech_stack_items**(id, project_id, kind[language|framework|library|tool|datastore], name, slug, version?, detected_from jsonb, usage_refs jsonb, role, created_at) — 检测到的技术项 + 在本仓库的角色/使用处（Tech Stack 面板、⌥4 联动）。
 
 ### 5.4 懒生成缓存
 **dimension_cache**(id, project_id, focus_type, focus_ref, dimension[1|2|3|4], payload jsonb, source, model, source_hash, created_at) — 通用懒生成缓存：⌥1 函数/类卡片、⌥3 执行路径叙述等首次生成后写回，之后直读；索引 `(project_id, focus_ref, dimension)`。
+**tech_literacy**(slug PK, kind, name, what, purpose, ecosystem_position, aliases jsonb, model, created_at) — **全局**（非按项目）技术认知缓存：是什么/用途/生态位置，跨项目复用、近乎免费。
 
 ### 5.5 记录、标签、轨迹（成长分析地基，MVP 即采集）
 **query_logs**(id, project_id, user_id, file_id?, level[code|module|arch], mode[selection|followup|preset|search|freeform], selection jsonb, snippet, question?, answer, parent_id?, provider, model, prompt_tokens, completion_tokens, cost_usd, latency_ms, created_at)；索引 `(user_id, created_at)`。
@@ -243,6 +269,8 @@ flowchart TB
 **code_chunks**(id, file_id, project_id, start_line, end_line, kind, symbol, ast_fingerprint, normalized_text, embedding vector)（P1，ivfflat/hnsw 索引）。
 **preset_questions**(id, level, scope?, text, order)。
 **jobs**(id, project_id, type[index|symbol|pregen|structure|embed], status, progress jsonb, error?, timestamps)。
+**agent_sessions**(id, user_id, project_id, title, created_at) — Agent Bar 会话。
+**agent_messages**(id, session_id, role[user|assistant|tool], content, citations jsonb, actions jsonb, suggestions jsonb, tool_calls jsonb, tokens, cost_usd, created_at) — 含引用/界面动作/建议/工具调用。
 
 ### 5.7 设计要点
 成长分析地基（query_logs + 标签三件套 + interaction_events）**MVP 第一天就建并采集**。`dimension_cache`/`code_chunks` 延后填充。所有分析产物带 `model`/`source_hash`，支持按版本追溯与增量重算。⌥2 调用图与 ⌥4 Treemap 主体为**确定性数据**（symbol_refs / structure_nodes），仅自然语言部分用 LLM 并缓存。
@@ -263,9 +291,12 @@ REST + SSE，挂 Next.js Route Handlers。鉴权 MVP 从简（单用户）。
 | GET | `/api/projects/:id/tree` · `/files?path=` | 文件树 / 文件内容 |
 | **POST** | **`/api/understand`** | **四维理解派发**：body `{projectId, focus:{type, ref, selection?}, dimension:1\|2\|3\|4}` → 按 §4.3 返回卡片/调用图/执行路径/Treemap；⌥1 选中代码为 **SSE** 流式，其余 JSON（首次懒生成可能稍慢） |
 | GET | `/api/projects/:id/architecture` | ⌥4 结构 Treemap + 概述（直读） |
+| GET | `/api/projects/:id/techstack` | 技术栈清单（语言/框架/库 + 本仓库角色/使用处） |
+| GET | `/api/tech/:slug` | 技术认知（是什么/用途/生态位置，全局缓存） |
 | GET | `/api/symbols/:symbolId/refs` | ⌥1 变量引用（谁读/写/用，确定性） |
 | GET | `/api/symbols/:symbolId/callgraph` | ⌥2 调用子图（结构 + NL） |
 | POST | `/api/events` | 批量上报交互轨迹/事件 |
+| **POST** | **`/api/agent`** | **SSE**：Agent Bar 探索；body `{projectId, sessionId?, message}` → 流式 `token/citation/action/suggestion/done`（§4.11） |
 | POST | `/api/search/generalize` | 泛化检索（P1） |
 | GET | `/api/insights/weak-points` | 成长分析弱项聚合（P1/P2） |
 | GET/PUT | `/api/settings` | 模型/厂商/成本上限（MVP 后端配置） |
@@ -322,6 +353,7 @@ interface LLMProvider {
 | `explain` | ⌥1 选中代码实时解释/追问 | 中等档（质量优先） |
 | `tagging` | 概念标签 | 随 explain 附带 |
 | `embedding` / `generalize_note` | 向量 / 泛化点评（P1） | 廉价档 |
+| `agent` | Agent Bar 规划与综合（工具调用循环） | 中等档（质量优先） |
 
 配置 `{ profile: { provider, model, temperature, batch?, cache? } }`，存环境变量/配置表；切厂商或模型只改配置。**MVP：Key 与配置只在后端**。
 
@@ -348,7 +380,7 @@ interface LLMProvider {
 
 ## 8. 前端实现要点
 
-**可停靠布局（Dockview/rc-dock）。** 文件树、代码、⌥2 调用、⌥3 执行、⌥4 架构、（⌥1 为浮层不占面板）等各为一个可停靠面板，支持拖拽/分屏/停靠/标签化/收起，布局状态持久化到 localStorage 或后端。视觉自有主题（见《design-system/Glint-Design-System.md》：电蓝×黑灰、Linear 风、像素点缀），不照搬 VS Code。
+**布局骨架与可停靠面板（Dockview/rc-dock）。** 骨架 ＝ 最左 **Edge bar**（竖向图标栏）＋ 可收起**侧栏**（文件树/搜索/技术栈/理解轨迹/设置）＋ 中部**可停靠面板区**（代码、⌥2、⌥3、⌥4 各为一面板）＋ ⌥1 浮层（不占面板）。面板支持拖拽/分屏/停靠/标签化/收起，布局状态持久化到 localStorage 或后端。视觉自有主题（见《design-system/Glint-Design-System.md》：电蓝×黑灰、Linear 风、像素点缀），不照搬 VS Code。
 
 **焦点解析 + Option 数字键派发。** 全局监听 `Option(Alt)+1/2/3/4`；按下时取"当前焦点"（代码面板光标处符号/变量或选区、文件树节点、图节点），组成 `{focusType, ref, selection?}` 调 `/api/understand`，按维度渲染：⌥1→浮卡（Floating UI 就近定位）、⌥2/⌥3→对应 React Flow 面板、⌥4→Treemap 面板。同一焦点切键只换面板/卡片、不改焦点。
 
@@ -357,6 +389,10 @@ interface LLMProvider {
 **代码面板（CodeMirror 6）。** 只读 + 高亮 + 选区/光标捕获；Option 模式下按光标定位符号供焦点解析；⌥1 选中代码触发 SSE 流式解释；相似行/相关节点可装饰高亮。
 
 **图面板（React Flow + dagre/ELK）。** ⌥2/⌥3 用真正的 DAG 布局算法（dagre 或 ELK），**当前焦点节点居中、调用者在上 / 被调用者在下（⌥2）、⌥3 按时序自上而下、节点永不重叠、打开或钻取后 fit-to-bounds**（避免节点被切掉）；节点为**实心卡片**（圆角 + 极轻投影 + 清晰端口，参考 Graphite/tldraw），**非霓虹描边空心框**；连线 hover/点击显示一句自然语言（`nl`）。点击节点或在更细对象 Option 实现钻取联动；⌥4 用 Treemap（D3/Nivo），中性明度阶分层、可缩放下钻。视觉细节详见《Glint-Design-System.md》§9.12–9.15。
+
+**技术栈面板（Edge bar）。** 「技术栈」面板列出 `tech_stack_items`；点开某项取 `/api/tech/:slug`（全局认知）+ 本仓库角色/使用处；点"使用处"切换焦点并可接 ⌥2/⌥4，与架构 Treemap 互跳。
+
+**Agent Bar 面板（Edge bar「Agent」入口 / 快捷键）。** 可停靠、可展开收起、随拉随走的探索面板；输入自然语言 → `POST /api/agent` SSE；渲染流式文本 + 可跳转引用 + 可"执行"的界面动作（`open_panel`/`focus`/`highlight`/`trigger_dimension`，导航即时、副作用需确认）+ 末尾探索建议。可常驻保留多轮，也可收起让位。动作经统一的 UI-action 调度器作用到其它面板（与焦点解析共用一套焦点/面板状态）。
 
 **事件去抖。** 高频动作采样上报；⌥触发/钻取/召回必报，批量发 `/api/events`。
 

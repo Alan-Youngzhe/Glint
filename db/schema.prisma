@@ -1,0 +1,438 @@
+// Glint 数据模型（Spec §5）。PostgreSQL；jsonb 半结构化；向量列 P1 再启用 pgvector。
+// MVP 单用户，但保留 users 与外键。所有分析产物带 model/source_hash 以支持版本追溯与增量重算。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── 枚举 ──
+enum SourceType {
+  local
+  github
+}
+
+enum SymbolKind {
+  function
+  class
+  method
+  variable
+}
+
+enum RefKind {
+  read
+  write
+  call
+  def
+}
+
+enum StructureKind {
+  dir
+  file
+  module
+}
+
+enum QueryLevel {
+  code
+  module
+  arch
+}
+
+enum QueryMode {
+  selection
+  followup
+  preset
+  search
+  freeform
+}
+
+enum ConceptStatus {
+  active
+  pending
+}
+
+enum TagSource {
+  model
+  rule
+}
+
+enum EventAction {
+  select
+  dim1
+  dim2
+  dim3
+  dim4
+  drill
+  recall
+}
+
+enum FocusType {
+  folder
+  file
+  module
+  function
+  class
+  variable
+  selection
+}
+
+enum JobType {
+  index
+  symbol
+  pregen
+  structure
+  embed
+}
+
+enum JobStatus {
+  pending
+  running
+  done
+  error
+}
+
+// ── 5.1 项目与文件 ──
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  projects  Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id              String     @id @default(cuid())
+  userId          String     @map("user_id")
+  name            String
+  sourceType      SourceType @map("source_type")
+  storageRef      String?    @map("storage_ref")
+  languageSummary Json?      @map("language_summary")
+  status          String     @default("created")
+  settings        Json?
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files File[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model File {
+  id          String   @id @default(cuid())
+  projectId   String   @map("project_id")
+  relPath     String   @map("rel_path")
+  lang        String?
+  sizeBytes   Int      @map("size_bytes")
+  loc         Int      @default(0)
+  contentHash String   @map("content_hash")
+  isBinary    Boolean  @default(false) @map("is_binary")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  symbols Symbol[]
+
+  @@index([projectId, relPath])
+  @@map("files")
+}
+
+// ── 5.2 符号 / 引用 / 调用 ──
+model Symbol {
+  id            String     @id @default(cuid())
+  fileId        String     @map("file_id")
+  projectId     String     @map("project_id")
+  kind          SymbolKind
+  name          String
+  qualifiedName String?    @map("qualified_name")
+  startLine     Int        @map("start_line")
+  endLine       Int        @map("end_line")
+  signature     String?
+
+  file File         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  refs SymbolRef[]
+
+  @@index([projectId, fileId])
+  @@index([projectId, name])
+  @@map("symbols")
+}
+
+model SymbolRef {
+  id        String  @id @default(cuid())
+  symbolId  String  @map("symbol_id")
+  projectId String  @map("project_id")
+  refFileId String  @map("ref_file_id")
+  refLine   Int     @map("ref_line")
+  refKind   RefKind @map("ref_kind")
+
+  symbol Symbol @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+
+  @@index([symbolId])
+  @@map("symbol_refs")
+}
+
+model CallEdge {
+  id             String @id @default(cuid())
+  projectId      String @map("project_id")
+  callerSymbolId String @map("caller_symbol_id")
+  calleeSymbolId String @map("callee_symbol_id")
+  refCount       Int    @default(1) @map("ref_count")
+
+  @@index([projectId])
+  @@map("call_edges")
+}
+
+// ── 5.3 预生成产物 ──
+model FileSummary {
+  id         String   @id @default(cuid())
+  fileId     String   @map("file_id")
+  projectId  String   @map("project_id")
+  summary    String
+  role       String?
+  calledBy   Json?    @map("called_by")
+  calls      Json?
+  keySymbols Json?    @map("key_symbols")
+  model      String?
+  sourceHash String?  @map("source_hash")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([projectId, fileId])
+  @@map("file_summaries")
+}
+
+model Module {
+  id             String   @id @default(cuid())
+  projectId      String   @map("project_id")
+  name           String
+  pathScope      String?  @map("path_scope")
+  responsibility String?
+  businessRole   String?  @map("business_role")
+  isEntry        Boolean  @default(false) @map("is_entry")
+  dependsOn      Json?    @map("depends_on")
+  fileIds        Json?    @map("file_ids")
+  model          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([projectId])
+  @@map("modules")
+}
+
+model ProjectAnalysis {
+  id                   String   @id @default(cuid())
+  projectId            String   @map("project_id")
+  version              Int      @default(1)
+  architectureOverview String?  @map("architecture_overview")
+  techStack            Json?    @map("tech_stack")
+  frameworks           Json?
+  model                String?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@index([projectId])
+  @@map("project_analysis")
+}
+
+model StructureNode {
+  id        String        @id @default(cuid())
+  projectId String        @map("project_id")
+  parentId  String?       @map("parent_id")
+  kind      StructureKind
+  name      String
+  relPath   String?       @map("rel_path")
+  moduleId  String?       @map("module_id")
+  loc       Int           @default(0)
+  sizeBytes Int           @default(0) @map("size_bytes")
+
+  @@index([projectId, parentId])
+  @@map("structure_nodes")
+}
+
+model EdgeExplanation {
+  id            String   @id @default(cuid())
+  projectId     String   @map("project_id")
+  sourceRef     String   @map("source_ref")
+  targetRef     String   @map("target_ref")
+  relationType  String   @map("relation_type")
+  nlExplanation String   @map("nl_explanation")
+  model         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([projectId, sourceRef, targetRef])
+  @@map("edge_explanations")
+}
+
+model StructureIteration {
+  id           String   @id @default(cuid())
+  projectId    String   @map("project_id")
+  round        Int
+  accuracy     Float?
+  missingFiles Json?    @map("missing_files")
+  extraFiles   Json?    @map("extra_files")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([projectId])
+  @@map("structure_iterations")
+}
+
+// ── 5.4 懒生成缓存 ──
+model DimensionCache {
+  id         String   @id @default(cuid())
+  projectId  String   @map("project_id")
+  focusType  FocusType @map("focus_type")
+  focusRef   String   @map("focus_ref")
+  dimension  Int
+  payload    Json
+  source     String?
+  model      String?
+  sourceHash String?  @map("source_hash")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([projectId, focusRef, dimension])
+  @@map("dimension_cache")
+}
+
+// ── 5.5 记录、标签、轨迹 ──
+model QueryLog {
+  id               String     @id @default(cuid())
+  projectId        String     @map("project_id")
+  userId           String     @map("user_id")
+  fileId           String?    @map("file_id")
+  level            QueryLevel
+  mode             QueryMode
+  selection        Json?
+  snippet          String?
+  question         String?
+  answer           String?
+  parentId         String?    @map("parent_id")
+  provider         String?
+  model            String?
+  promptTokens     Int        @default(0) @map("prompt_tokens")
+  completionTokens Int        @default(0) @map("completion_tokens")
+  costUsd          Float      @default(0) @map("cost_usd")
+  latencyMs        Int?       @map("latency_ms")
+  createdAt        DateTime   @default(now()) @map("created_at")
+
+  conceptTags QueryConceptTag[]
+
+  @@index([userId, createdAt])
+  @@map("query_logs")
+}
+
+model ConceptTag {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  name      String
+  category  String?
+  aliases   Json?
+  status    ConceptStatus @default(active)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  queries QueryConceptTag[]
+
+  @@map("concept_tags")
+}
+
+model QueryConceptTag {
+  queryLogId   String    @map("query_log_id")
+  conceptTagId String    @map("concept_tag_id")
+  confidence   Float?
+  source       TagSource @default(model)
+
+  queryLog   QueryLog   @relation(fields: [queryLogId], references: [id], onDelete: Cascade)
+  conceptTag ConceptTag @relation(fields: [conceptTagId], references: [id], onDelete: Cascade)
+
+  @@id([queryLogId, conceptTagId])
+  @@index([conceptTagId])
+  @@map("query_concept_tags")
+}
+
+model InteractionEvent {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  projectId String      @map("project_id")
+  sessionId String?     @map("session_id")
+  action    EventAction
+  focusType FocusType   @map("focus_type")
+  focusRef  String      @map("focus_ref")
+  level     String?
+  dwellMs   Int?        @map("dwell_ms")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([projectId, focusType])
+  @@map("interaction_events")
+}
+
+model TrajectoryItem {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  projectId String    @map("project_id")
+  sessionId String?   @map("session_id")
+  orderIdx  Int       @map("order_idx")
+  focusType FocusType @map("focus_type")
+  focusRef  String    @map("focus_ref")
+  dimension Int
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, projectId])
+  @@map("trajectory_items")
+}
+
+model UserConceptStat {
+  userId        String   @map("user_id")
+  conceptTagId  String   @map("concept_tag_id")
+  askCount      Int      @default(0) @map("ask_count")
+  dimCounts     Json?    @map("dim_counts")
+  lastAt        DateTime? @map("last_at")
+  trend         Json?
+  masterySignal Float?   @map("mastery_signal")
+
+  @@id([userId, conceptTagId])
+  @@map("user_concept_stats")
+}
+
+// ── 5.6 检索与任务 ──
+model CodeChunk {
+  id             String   @id @default(cuid())
+  fileId         String   @map("file_id")
+  projectId      String   @map("project_id")
+  startLine      Int      @map("start_line")
+  endLine        Int      @map("end_line")
+  kind           String?
+  symbol         String?
+  astFingerprint String?  @map("ast_fingerprint")
+  normalizedText String?  @map("normalized_text")
+  // P1: 启用 pgvector 后加 embedding 列（Unsupported("vector(1536)") + ivfflat/hnsw 索引）
+
+  @@index([projectId, fileId])
+  @@map("code_chunks")
+}
+
+model PresetQuestion {
+  id    String      @id @default(cuid())
+  level QueryLevel
+  scope String?
+  text  String
+  order Int         @default(0)
+
+  @@map("preset_questions")
+}
+
+model Job {
+  id        String    @id @default(cuid())
+  projectId String    @map("project_id")
+  type      JobType
+  status    JobStatus @default(pending)
+  progress  Json?
+  error     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([projectId])
+  @@map("jobs")
+}
