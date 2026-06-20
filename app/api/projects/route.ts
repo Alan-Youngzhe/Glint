@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { importZip } from "@/lib/import";
 import { parseProject } from "@/lib/parse";
+import { detectTechStack } from "@/lib/techstack";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,12 +46,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 技术栈检测（确定性）
+    let tech = 0;
+    try {
+      tech = await detectTechStack(result.projectId);
+    } catch (e) {
+      console.error("[detectTechStack] failed:", e);
+    }
+
     return NextResponse.json({
       project: { id: result.projectId, name },
       jobId: result.jobId,
       fileCount: result.fileCount,
       skipped: result.skipped,
       parsed,
+      tech,
     });
   } catch (err) {
     return NextResponse.json(

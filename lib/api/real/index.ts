@@ -4,7 +4,12 @@
  * 未接通的暂回退到 mock，保证前端不阻塞、组件无需改动。
  */
 import type { GlintApi } from "@/lib/api";
-import type { FileContent, TreeNode } from "@/types/contract";
+import type {
+  FileContent,
+  TechItem,
+  TechLiteracy,
+  TreeNode,
+} from "@/types/contract";
 import { mockApi } from "@/lib/api/mock";
 
 async function getJson<T>(url: string): Promise<T> {
@@ -24,11 +29,17 @@ export const realApi: GlintApi = {
     );
   },
 
-  // ── 未接通：回退 mock（architecture/techstack=M2，understand=M3）──
+  // ── 已接通（M2 技术栈）──
+  techstack(projectId) {
+    return getJson<TechItem[]>(`/api/projects/${projectId}/techstack`);
+  },
+  tech(slug) {
+    return getJson<TechLiteracy>(`/api/tech/${encodeURIComponent(slug)}`);
+  },
+
+  // ── 未接通：回退 mock（architecture=M2 余下，understand=M3）──
   understand: mockApi.understand,
   understandStream: mockApi.understandStream,
   architecture: mockApi.architecture,
-  techstack: mockApi.techstack,
-  tech: mockApi.tech,
   logEvents: mockApi.logEvents,
 };
