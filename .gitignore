@@ -12,7 +12,13 @@ out/
 # 环境与密钥
 .env
 .env.*
+!.env.example
 *.local
+
+# Next / TS 生成物
+next-env.d.ts
+*.tsbuildinfo
+.vercel
 
 # 日志
 *.log

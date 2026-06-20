@@ -4,7 +4,7 @@
 | --- | --- |
 | 版本 | v0.2（实现级：核心交互 / 预理解管线 / 技术栈认知 / Agent Bar 全展开） |
 | 状态 | 可执行 · 随 PRD/Spec 演进 |
-| 最后更新 | 2026-06-19 |
+| 最后更新 | 2026-06-20 |
 | 关联 | 《Glint-PRD.md》v0.7 ·《Glint-技术Spec.md》v0.6 ·《design-system/Glint-Design-System.md》 |
 | 执行者 | 使用者本人 或 AI 编码 agent |
 
@@ -441,3 +441,14 @@ export const api: GlintApi = process.env.NEXT_PUBLIC_API_MODE==='real' ? realApi
 5. **前端 mock 形状偏离契约**：尤其 Agent 流式事件与 UIAction，集成才暴雷——以 `types/contract.ts` 为唯一真相。
 6. **预生成成本**：先小项目校准轮次与成本，软上限兜底，悬停/技术栈通用知识走直读/全局缓存。
 7. **UI 抢色**：chrome 上多色就和代码语法高亮打架——保持中性 + 单一电蓝。
+
+---
+
+## 修订历史
+
+| 版本 | 日期 | 摘要 |
+| --- | --- | --- |
+| v0.2 | 2026-06-20 | 实现级：核心交互 / 预理解管线 / 技术栈 / Agent Bar 全展开 + 完整契约 + 伪代码 |
+| v0.1 | 2026-06-20 | 首版：契约优先 + 前端 mock 先行 + M0–M4 步骤与 DoD |
+
+> 版本管理规范见 `VERSIONING.md`。
