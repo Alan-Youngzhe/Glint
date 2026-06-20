@@ -95,6 +95,14 @@ enum JobStatus {
   error
 }
 
+enum TechKind {
+  language
+  framework
+  library
+  tool
+  datastore
+}
+
 // ── 5.1 项目与文件 ──
 model User {
   id        String    @id @default(cuid())
@@ -435,4 +443,36 @@ model Job {
 
   @@index([projectId])
   @@map("jobs")
+}
+
+// ── 技术栈（二期 · V2 §3.2）──
+model TechStackItem {
+  id           String   @id @default(cuid())
+  projectId    String   @map("project_id")
+  kind         TechKind
+  name         String
+  slug         String
+  version      String?
+  detectedFrom Json?    @map("detected_from") // package.json / 扩展名 等来源
+  usageRefs    Json?    @map("usage_refs")
+  role         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([projectId])
+  @@map("tech_stack_items")
+}
+
+model TechLiteracy {
+  // 全局（非按项目），跨项目复用
+  slug              String   @id
+  kind              String
+  name              String
+  what              String
+  purpose           String
+  ecosystemPosition String   @map("ecosystem_position")
+  aliases           Json?
+  model             String?
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("tech_literacy")
 }
