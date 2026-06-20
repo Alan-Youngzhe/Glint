@@ -1,8 +1,13 @@
 # Glint 文档变更记录
 
-记录 PRD / 技术 Spec / Design System 文档的版本演进。
+记录 PRD / 技术 Spec / Design System / 施工手册 文档的版本演进。
 
-## v0.7 — 2026-06-20（当前）
+## 施工手册 V2（二期）— 2026-06-20（当前）
+- 新增《Glint-施工手册-V2.md》：二期工程施工手册，承接一期已落地的 M0 代码，覆盖 **M1 导入与浏览 + M2 预理解/架构/技术栈**；含一期现状盘点、契约与 schema 增量、真实 API 翻新顺序、Edge bar/Sidebar 补齐、DoD/风险、三期预告。
+- 确立**期次切分**：一期 = M0（已落代码）；二期 = M1+M2（本手册，少依赖设计稿）；三期 = M3 四维交互 + Agent Bar（待设计稿，另出 V3）。
+- 一期工程状态记录：仓库已落 Next.js+Dockview 骨架、`types/contract.ts`、`lib/ai`、`lib/api`(mock/real)、`db/schema.prisma`（至 v0.5 级）、`styles/tokens.css`、`fixtures/`、`/api/test`。
+
+## v0.7 — 2026-06-20
 - PRD/Spec：新增 **Agent Bar**（开放式探索，P0）——可停靠/可收起面板，能力为「读 + 驱动界面 + 主动建议」；编排 Agent + 工具集 + SSE（token/citation/action/suggestion）；`agent_sessions/agent_messages`、`/api/agent`。
 - Spec：加深预生成的 **模块关系推断**（§4.2）——关系骨架来自 `call_edges/import` 确定性聚合，模型只补语义（"把架构-模块关系理解到"的落地）。
 - 施工手册升 **v0.2（实现级）**：核心交互（焦点解析 / Option 派发 / 四维渲染 / 浮卡生命周期 / 轨迹状态机 / 钻取 / UI-action 调度器）、预理解管线、技术栈认知、Agent Bar 全展开 + 完整契约类型 + 伪代码。
