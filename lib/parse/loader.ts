@@ -2,10 +2,23 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 import Parser from "web-tree-sitter";
 
-/** tree-sitter 运行时与 grammar 加载（web-tree-sitter 0.20，ABI 与 tree-sitter-wasms 对齐）。 */
+/**
+ * tree-sitter 运行时与 grammar 加载（web-tree-sitter 0.20，ABI 与 tree-sitter-wasms 对齐）。
+ * web-tree-sitter 是 CJS（module.exports = Parser 类）。webpack 的 default-interop 在 HMR 下
+ * 可能把默认导出包成 {default: Parser}，导致 `Parser.init is not a function`——故调用时用 ctor() 再解析一次。
+ */
 
 export type TSNode = Parser.SyntaxNode;
 export type TSParser = Parser;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ctor(): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const m: any = Parser;
+  if (m && typeof m.init === "function") return m;
+  if (m?.default && typeof m.default.init === "function") return m.default;
+  return m;
+}
 
 const WTS_DIR = path.join(process.cwd(), "node_modules", "web-tree-sitter");
 const GRAMMAR_DIR = path.join(
@@ -15,7 +28,6 @@ const GRAMMAR_DIR = path.join(
   "out",
 );
 
-/** 我们识别的 grammar（按文件扩展名选，tsx/jsx 用对应 grammar）。 */
 const GRAMMAR_FILE = {
   typescript: "tree-sitter-typescript.wasm",
   tsx: "tree-sitter-tsx.wasm",
@@ -39,9 +51,9 @@ const langCache = new Map<Grammar, Parser.Language>();
 
 function ensureInit(): Promise<void> {
   if (!initPromise) {
-    initPromise = Parser.init({
+    initPromise = ctor().init({
       locateFile: (name: string) => path.join(WTS_DIR, name),
-    });
+    }) as Promise<void>;
   }
   return initPromise;
 }
@@ -51,14 +63,15 @@ export async function loadLanguage(grammar: Grammar): Promise<Parser.Language> {
   if (cached) return cached;
   await ensureInit();
   const bytes = await readFile(path.join(GRAMMAR_DIR, GRAMMAR_FILE[grammar]));
-  const language = await Parser.Language.load(new Uint8Array(bytes));
+  const language = await ctor().Language.load(new Uint8Array(bytes));
   langCache.set(grammar, language);
   return language;
 }
 
 export async function createParser(grammar: Grammar): Promise<Parser> {
   const language = await loadLanguage(grammar);
-  const parser = new Parser();
+  const P = ctor();
+  const parser = new P();
   parser.setLanguage(language);
   return parser;
 }
