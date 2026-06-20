@@ -9,6 +9,8 @@ import {
   type IDockviewPanelProps,
 } from "dockview";
 import type { Theme } from "./ThemeToggle";
+import { FileTreePanel } from "@/components/tree/FileTreePanel";
+import { CodePanel } from "@/components/code/CodePanel";
 
 interface PanelParams {
   title: string;
@@ -37,23 +39,25 @@ function PlaceholderPanel(props: IDockviewPanelProps<PanelParams>) {
   );
 }
 
-const components = { placeholder: PlaceholderPanel };
+const components = {
+  placeholder: PlaceholderPanel,
+  filetree: () => <FileTreePanel />,
+  code: () => <CodePanel />,
+};
 
 function onReady(event: DockviewReadyEvent) {
   const api = event.api;
 
   const explorer = api.addPanel({
     id: "explorer",
-    component: "placeholder",
+    component: "filetree",
     title: "资源管理器",
-    params: { title: "资源管理器", hint: "文件树（M1 接入）。" },
   });
 
   const code = api.addPanel({
     id: "code",
-    component: "placeholder",
+    component: "code",
     title: "代码",
-    params: { title: "代码", hint: "CodeMirror 代码面板（M1 接入）。" },
     position: { referencePanel: explorer.id, direction: "right" },
   });
 
