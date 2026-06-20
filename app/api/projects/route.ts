@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { importZip } from "@/lib/import";
 import { parseProject } from "@/lib/parse";
 import { detectTechStack } from "@/lib/techstack";
+import { pregenProject } from "@/lib/pregen";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +55,25 @@ export async function POST(req: NextRequest) {
       console.error("[detectTechStack] failed:", e);
     }
 
+    // 预理解：结构 + 模块关系 + 架构（确定性骨架 + LLM 可选）
+    let pregen: { structureNodes: number; modules: number } | null = null;
+    try {
+      pregen = await pregenProject(result.projectId);
+      await prisma.job.create({
+        data: { projectId: result.projectId, type: "pregen", status: "done", progress: pregen },
+      });
+    } catch (e) {
+      console.error("[pregenProject] failed:", e);
+      await prisma.job.create({
+        data: {
+          projectId: result.projectId,
+          type: "pregen",
+          status: "error",
+          error: e instanceof Error ? e.message : String(e),
+        },
+      });
+    }
+
     return NextResponse.json({
       project: { id: result.projectId, name },
       jobId: result.jobId,
@@ -61,6 +81,7 @@ export async function POST(req: NextRequest) {
       skipped: result.skipped,
       parsed,
       tech,
+      pregen,
     });
   } catch (err) {
     return NextResponse.json(

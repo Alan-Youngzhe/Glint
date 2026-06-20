@@ -12,6 +12,7 @@ import type { Theme } from "./ThemeToggle";
 import { FileTreePanel } from "@/components/tree/FileTreePanel";
 import { CodePanel } from "@/components/code/CodePanel";
 import { TechStackPanel } from "@/components/techstack/TechStackPanel";
+import { ArchPanel } from "@/components/treemap/ArchPanel";
 
 interface PanelParams {
   title: string;
@@ -45,6 +46,7 @@ const components = {
   filetree: () => <FileTreePanel />,
   code: () => <CodePanel />,
   techstack: () => <TechStackPanel />,
+  arch: () => <ArchPanel />,
 };
 
 function onReady(event: DockviewReadyEvent) {
@@ -65,13 +67,8 @@ function onReady(event: DockviewReadyEvent) {
 
   const arch = api.addPanel({
     id: "architecture",
-    component: "placeholder",
+    component: "arch",
     title: "架构",
-    params: {
-      title: "架构 Treemap",
-      hint: "⌥4 架构鸟瞰（M2 接入）。",
-      keycap: "⌥4",
-    },
     position: { referencePanel: code.id, direction: "right" },
   });
 

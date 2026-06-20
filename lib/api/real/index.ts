@@ -5,6 +5,7 @@
  */
 import type { GlintApi } from "@/lib/api";
 import type {
+  ArchitecturePayload,
   FileContent,
   TechItem,
   TechLiteracy,
@@ -29,17 +30,19 @@ export const realApi: GlintApi = {
     );
   },
 
-  // ── 已接通（M2 技术栈）──
+  // ── 已接通（M2）──
   techstack(projectId) {
     return getJson<TechItem[]>(`/api/projects/${projectId}/techstack`);
   },
   tech(slug) {
     return getJson<TechLiteracy>(`/api/tech/${encodeURIComponent(slug)}`);
   },
+  architecture(projectId) {
+    return getJson<ArchitecturePayload>(`/api/projects/${projectId}/architecture`);
+  },
 
-  // ── 未接通：回退 mock（architecture=M2 余下，understand=M3）──
+  // ── 未接通：回退 mock（understand=M3）──
   understand: mockApi.understand,
   understandStream: mockApi.understandStream,
-  architecture: mockApi.architecture,
   logEvents: mockApi.logEvents,
 };
