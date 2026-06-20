@@ -2,6 +2,10 @@
 
 记录 PRD / 技术 Spec / Design System 文档的版本演进。
 
+## Design System v0.1 — 2026-06-19
+- 新增完整《design-system/Glint-Design-System.md》：暗色优先（Linear 风）+ 浅色两套；电蓝×黑灰、全局唯一强调色；Inter + JetBrains Mono + 像素点阵字；间距/圆角/描边/阴影/运动令牌；Linear 风组件规范；图谱 dagre/ELK 分层布局 + 实心节点（参考 Sourcetrail/Graphite）；可访问性与令牌总表。
+- 调性定稿：弃用早先「Bifrost 暖色 Riso」，改为电蓝×黑灰·Linear 风·像素点缀；PRD §5.4 与 Spec §2.1/§8 同步对齐。
+
 ## v0.5 — 2026-06-19（当前）
 - 产品定名 **Glint**（曾用名：代码理解工具 → Thinkode → Glint）。
 - 核心交互改为「选中 + Option 数字键」四维理解：⌥1 为什么这么写 / ⌥2 调用关系 / ⌥3 执行路径 / ⌥4 架构，同一焦点瞬时切换。

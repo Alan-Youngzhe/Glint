@@ -44,11 +44,11 @@ Glint 是一个 web 应用：用户上传本地项目，系统索引、符号解
 | 代码解析 | **web-tree-sitter（WASM）** | AST、**符号索引与引用/调用分析**（支撑 ⌥1 变量级、⌥2 调用图、⌥3 trace） |
 | **可停靠布局** | **Dockview 或 rc-dock** | VS Code 式面板拖拽/分屏/停靠/标签化/收起，省自研布局成本 |
 | 代码展示/选区 | **CodeMirror 6**（自定义主题） | 轻量、易主题化；**不用 Monaco** 以避免"VS Code 长相"，并承载选区/光标焦点 |
-| ⌥2/⌥3 图渲染 | **React Flow**（MVP；后续可评估 D3/d3-graphviz） | 节点/连线/拖拽/缩放/minimap 开箱即用，求快 |
+| ⌥2/⌥3 图渲染 | **React Flow + dagre/ELK 布局**（MVP；后续可评估 D3/d3-graphviz） | 分层 DAG：当前居中、调用者上/被调用者下、不重叠、fit-to-bounds |
 | ⌥4 架构鸟瞰 | **Treemap**（D3 treemap 或 Nivo treemap） | 可缩放区块版图 |
 | ⌥1 浮卡 | 自研浮层（Floating UI 定位） | 就近浮卡 + 轨迹标签 |
 | 文件树 | 自研 React 组件 | 交互参考 VS Code，视觉自有设计 |
-| 样式/组件 | Tailwind + shadcn/ui，调性参考 Bifrost 暖色 Riso | 美观、可换肤 |
+| 样式/组件 | Tailwind + shadcn/ui，调性见 Design System（电蓝×黑灰·Linear 风·像素点缀） | 美观、可换肤 |
 | 前端状态 | Zustand | 项目/焦点/维度/轨迹/面板布局/会话 |
 | AI SDK | openai + @anthropic-ai/sdk | 封装在统一 Provider 接口后（§7） |
 | 后台任务 | MVP：DB 任务表 + 进程内 worker；扩展：BullMQ+Redis | 索引/预生成/结构/嵌入异步化 |
@@ -348,7 +348,7 @@ interface LLMProvider {
 
 ## 8. 前端实现要点
 
-**可停靠布局（Dockview/rc-dock）。** 文件树、代码、⌥2 调用、⌥3 执行、⌥4 架构、（⌥1 为浮层不占面板）等各为一个可停靠面板，支持拖拽/分屏/停靠/标签化/收起，布局状态持久化到 localStorage 或后端。视觉自有主题（Bifrost 暖色 Riso），不照搬 VS Code。
+**可停靠布局（Dockview/rc-dock）。** 文件树、代码、⌥2 调用、⌥3 执行、⌥4 架构、（⌥1 为浮层不占面板）等各为一个可停靠面板，支持拖拽/分屏/停靠/标签化/收起，布局状态持久化到 localStorage 或后端。视觉自有主题（见《design-system/Glint-Design-System.md》：电蓝×黑灰、Linear 风、像素点缀），不照搬 VS Code。
 
 **焦点解析 + Option 数字键派发。** 全局监听 `Option(Alt)+1/2/3/4`；按下时取"当前焦点"（代码面板光标处符号/变量或选区、文件树节点、图节点），组成 `{focusType, ref, selection?}` 调 `/api/understand`，按维度渲染：⌥1→浮卡（Floating UI 就近定位）、⌥2/⌥3→对应 React Flow 面板、⌥4→Treemap 面板。同一焦点切键只换面板/卡片、不改焦点。
 
@@ -356,7 +356,7 @@ interface LLMProvider {
 
 **代码面板（CodeMirror 6）。** 只读 + 高亮 + 选区/光标捕获；Option 模式下按光标定位符号供焦点解析；⌥1 选中代码触发 SSE 流式解释；相似行/相关节点可装饰高亮。
 
-**图面板（React Flow）。** ⌥2 调用图（节点+连线，连线 hover/点击显示 `nl`）；⌥3 执行路径（顺序/泳道布局）；点击节点或在更细对象 Option 实现钻取联动；⌥4 用 Treemap（D3/Nivo），可缩放下钻。
+**图面板（React Flow + dagre/ELK）。** ⌥2/⌥3 用真正的 DAG 布局算法（dagre 或 ELK），**当前焦点节点居中、调用者在上 / 被调用者在下（⌥2）、⌥3 按时序自上而下、节点永不重叠、打开或钻取后 fit-to-bounds**（避免节点被切掉）；节点为**实心卡片**（圆角 + 极轻投影 + 清晰端口，参考 Graphite/tldraw），**非霓虹描边空心框**；连线 hover/点击显示一句自然语言（`nl`）。点击节点或在更细对象 Option 实现钻取联动；⌥4 用 Treemap（D3/Nivo），中性明度阶分层、可缩放下钻。视觉细节详见《Glint-Design-System.md》§9.12–9.15。
 
 **事件去抖。** 高频动作采样上报；⌥触发/钻取/召回必报，批量发 `/api/events`。
 
