@@ -8,6 +8,8 @@ import type {
   CardPayload,
   FileContent,
   InteractionEvent,
+  TechItem,
+  TechLiteracy,
   TreeNode,
   UnderstandRequest,
   UnderstandResponse,
@@ -22,6 +24,8 @@ export interface GlintApi {
     req: UnderstandRequest,
   ): AsyncIterable<UnderstandStreamChunk>;
   architecture(projectId: string): Promise<ArchitecturePayload>;
+  techstack(projectId: string): Promise<TechItem[]>;
+  tech(slug: string): Promise<TechLiteracy>;
   logEvents(events: InteractionEvent[]): Promise<void>;
 }
 
@@ -30,6 +34,8 @@ export type {
   CardPayload,
   FileContent,
   InteractionEvent,
+  TechItem,
+  TechLiteracy,
   TreeNode,
   UnderstandRequest,
   UnderstandResponse,

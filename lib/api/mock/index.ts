@@ -7,6 +7,8 @@ import type {
   ArchitecturePayload,
   CardPayload,
   FileContent,
+  TechItem,
+  TechLiteracy,
   TreeNode,
   UnderstandRequest,
   UnderstandResponse,
@@ -14,6 +16,7 @@ import type {
 import { architectureFixture } from "@/fixtures/architecture";
 import { fileContents, treeFixture } from "@/fixtures/tree";
 import { understandFixture } from "@/fixtures/understand";
+import { techLiteracyFixture, techstackFixture } from "@/fixtures/techstack";
 
 const delay = (ms = 120) => new Promise((r) => setTimeout(r, ms));
 
@@ -52,6 +55,26 @@ export const mockApi: GlintApi = {
   async architecture(_projectId: string): Promise<ArchitecturePayload> {
     await delay();
     return architectureFixture;
+  },
+
+  async techstack(_projectId: string): Promise<TechItem[]> {
+    await delay();
+    return techstackFixture;
+  },
+
+  async tech(slug: string): Promise<TechLiteracy> {
+    await delay();
+    const t = techLiteracyFixture[slug];
+    if (!t) {
+      return {
+        slug,
+        name: slug,
+        what: "（mock：暂无认知）",
+        purpose: "",
+        ecosystemPosition: "",
+      };
+    }
+    return t;
   },
 
   async logEvents(events): Promise<void> {

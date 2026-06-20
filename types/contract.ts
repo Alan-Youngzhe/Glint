@@ -162,3 +162,22 @@ export interface InteractionEvent {
 export type UnderstandStreamChunk =
   | { delta: string }
   | { done: CardPayload };
+
+// ===== 技术栈（二期 · V2 §3.1） =====
+export interface TechItem {
+  slug: string;
+  name: string;
+  kind: "language" | "framework" | "library" | "tool" | "datastore";
+  version?: string;
+  role?: string; // 在本仓库的角色
+  usageRefs?: { at: string }[]; // 使用处（可跳转）
+}
+
+export interface TechLiteracy {
+  // 项目无关的通用认知（全局缓存）
+  slug: string;
+  name: string;
+  what: string;
+  purpose: string;
+  ecosystemPosition: string;
+}

@@ -7,6 +7,8 @@ import type {
   ArchitecturePayload,
   FileContent,
   InteractionEvent,
+  TechItem,
+  TechLiteracy,
   TreeNode,
   UnderstandRequest,
   UnderstandResponse,
@@ -44,6 +46,12 @@ export const realApi: GlintApi = {
     return getJson<ArchitecturePayload>(
       `/api/projects/${projectId}/architecture`,
     );
+  },
+  techstack(projectId) {
+    return getJson<TechItem[]>(`/api/projects/${projectId}/techstack`);
+  },
+  tech(slug) {
+    return getJson<TechLiteracy>(`/api/tech/${encodeURIComponent(slug)}`);
   },
   async logEvents(events: InteractionEvent[]) {
     await fetch("/api/events", {
