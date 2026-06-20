@@ -2,7 +2,12 @@
 
 记录 PRD / 技术 Spec / Design System / 施工手册 文档的版本演进。
 
-## 前端设计稿落地 — 2026-06-20（当前）
+## 后续期次施工手册（V3 / V4）— 2026-06-20（当前）
+- 新增《Glint-施工手册-V3.md》（**三期 M3**：四维交互 + Agent Bar + 轨迹，按设计稿 DS §15 + 一二期代码落地；契约/schema 增量、焦点解析/派发/浮卡/轨迹/UI-action/Agent 伪代码、真实 API、DoD/风险）。
+- 新增《Glint-施工手册-V4.md》（**四期 M4**：⌥3 深化 / 泛化检索 / 全量 RAG / 成长分析 / 上线 五模块；契约/schema 增量、各模块步骤与 DoD/风险）。
+- **四期施工手册齐备**：一期 M0 已落代码；二/三/四期手册可整套交付下一个 agent 执行。README 增「工程期次」导航。
+
+## 前端设计稿落地 — 2026-06-20
 - **设计稿归档** `design-system/design/`（3 张 IDE 主界面图 + 组件特写 + mood board + 可交互原型 `Glint.dc.html`）。
 - **Design System v0.2**：新增 §15「界面布局与设计落地」——总体布局、四维用户文案（为什么/谁调用/怎么执行/在哪）、**来源标签 provenance**、⌥1 浮卡 / **INSIGHT 三 Tab 合一** / **底部 TrajectoryBar** / 状态栏规范。
 - **施工手册 v0.3**：§3 布局对齐设计稿（TopBar / FocusBar / 维度切换条 / INSIGHT 三 Tab / 底部轨迹条 / StatusBar），修正旧版「⌥2-4 三独立面板 + 轨迹放浮层」。
