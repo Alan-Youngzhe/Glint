@@ -13,6 +13,7 @@ import { CodePanel } from "@/components/code/CodePanel";
 import { TechStackPanel } from "@/components/techstack/TechStackPanel";
 import { InsightPanel } from "@/components/graph/InsightPanel";
 import { AgentPanel } from "@/components/agent/AgentPanel";
+import { WeakBoard } from "@/components/insights/WeakBoard";
 
 const components = {
   filetree: () => <FileTreePanel />,
@@ -20,6 +21,7 @@ const components = {
   insight: () => <InsightPanel />,
   techstack: () => <TechStackPanel />,
   agent: () => <AgentPanel />,
+  weak: () => <WeakBoard />,
 };
 
 function onReady(event: DockviewReadyEvent) {
@@ -56,6 +58,13 @@ function onReady(event: DockviewReadyEvent) {
     id: "agent",
     component: "agent",
     title: "Agent",
+    position: { referencePanel: techstack.id, direction: "within" },
+  });
+
+  api.addPanel({
+    id: "weak",
+    component: "weak",
+    title: "成长",
     position: { referencePanel: techstack.id, direction: "within" },
   });
 
