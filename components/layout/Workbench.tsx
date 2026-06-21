@@ -5,8 +5,12 @@ import { useEffect, useState } from "react";
 import { ThemeToggle, type Theme } from "./ThemeToggle";
 import { ProjectBar } from "@/components/shell/ProjectBar";
 import { GlobalKeys } from "@/components/shell/GlobalKeys";
+import { EdgeBar } from "@/components/shell/EdgeBar";
+import { StatusBar } from "@/components/shell/StatusBar";
 import { FloatingCard } from "@/components/card/FloatingCard";
 import { TrajectoryBar } from "@/components/card/TrajectoryBar";
+import { useFocus } from "@/stores/focus";
+import { cn } from "@/lib/utils";
 
 const DockShell = dynamic(
   () => import("./DockShell").then((m) => m.DockShell),
@@ -20,18 +24,27 @@ const DockShell = dynamic(
   },
 );
 
-const DIMENSIONS: { key: string; label: string }[] = [
-  { key: "⌥1", label: "为什么这么写" },
-  { key: "⌥2", label: "调用关系" },
-  { key: "⌥3", label: "执行路径" },
-  { key: "⌥4", label: "架构" },
-];
+const MENUS = ["文件", "编辑", "视图", "运行"];
 
-function Keycap({ children }: { children: React.ReactNode }) {
+/** TopBar 右侧维度键帽指示（当前维度电蓝，DS §15.7）。 */
+function DimKeycaps() {
+  const dim = useFocus((s) => s.dim);
   return (
-    <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-pixel border border-border-strong bg-surface-elevated px-1 font-pixel text-pixel-label uppercase text-text-secondary">
-      {children}
-    </span>
+    <div className="hidden items-center gap-1 md:flex">
+      {[1, 2, 3, 4].map((n) => (
+        <span
+          key={n}
+          className={cn(
+            "inline-flex h-5 min-w-[22px] items-center justify-center rounded-pixel border px-1 font-pixel text-pixel-label uppercase",
+            dim === n
+              ? "border-accent bg-accent text-accent-fg"
+              : "border-border-strong bg-surface-elevated text-text-tertiary",
+          )}
+        >
+          ⌥{n}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -57,35 +70,46 @@ export function Workbench() {
 
   return (
     <div className="flex h-screen flex-col bg-bg text-text">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-4">
+      {/* TopBar */}
+      <header className="relative flex h-10 shrink-0 items-center border-b border-border px-3">
         <div className="flex items-center gap-3">
-          <span className="font-pixel text-pixel-label uppercase tracking-wide text-accent-text">
-            Glint
+          <span className="flex items-center gap-1 font-pixel text-pixel-label uppercase tracking-wide text-accent-text">
+            ▲ Glint
           </span>
+          <nav className="hidden items-center gap-3 lg:flex">
+            {MENUS.map((m) => (
+              <span key={m} className="text-caption text-text-tertiary">
+                {m}
+              </span>
+            ))}
+          </nav>
+        </div>
+
+        {/* 居中：项目选择/导入 */}
+        <div className="absolute left-1/2 -translate-x-1/2">
           <ProjectBar />
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-3 md:flex">
-            {DIMENSIONS.map((d) => (
-              <span key={d.key} className="flex items-center gap-1.5">
-                <Keycap>{d.key}</Keycap>
-                <span className="text-caption text-text-tertiary">
-                  {d.label}
-                </span>
-              </span>
-            ))}
-          </div>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="hidden text-caption text-text-tertiary xl:inline">
+            选中对象，按一个键看懂它
+          </span>
+          <DimKeycaps />
           <ThemeToggle theme={theme} onToggle={toggle} />
         </div>
       </header>
 
-      <main className="relative min-h-0 flex-1">
-        <DockShell theme={theme} />
-        <FloatingCard />
-      </main>
+      {/* 主体：EdgeBar + Dock + 浮卡 */}
+      <div className="flex min-h-0 flex-1">
+        <EdgeBar />
+        <main className="relative min-h-0 flex-1">
+          <DockShell theme={theme} />
+          <FloatingCard />
+        </main>
+      </div>
 
       <TrajectoryBar />
+      <StatusBar />
       <GlobalKeys />
     </div>
   );

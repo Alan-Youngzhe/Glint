@@ -52,6 +52,7 @@ export async function openFloatingCard(focus: Focus) {
 export async function dispatchDimension(focus: Focus, dim: Dimension) {
   const projectId = useWorkspace.getState().projectId;
   if (!projectId) return;
+  useFocus.getState().setDim(dim);
   reportEvent({
     action: `dim${dim}` as InteractionEvent["action"],
     focusType: focus.type,
