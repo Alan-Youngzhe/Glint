@@ -9,12 +9,14 @@ import type {
   AgentRequest,
   ArchitecturePayload,
   FileContent,
+  GeneralizeResult,
   TechItem,
   TechLiteracy,
   TreeNode,
   UnderstandRequest,
   UnderstandResponse,
   UnderstandStreamChunk,
+  WeakPoint,
 } from "@/types/contract";
 import { mockApi } from "@/lib/api/mock";
 
@@ -92,6 +94,12 @@ export const realApi: GlintApi = {
   },
   agent(req: AgentRequest) {
     return sse<AgentEvent>("/api/agent", req);
+  },
+  search(req) {
+    return postJson<GeneralizeResult>("/api/search/generalize", req);
+  },
+  weakPoints(projectId) {
+    return getJson<WeakPoint[]>(`/api/insights/weak-points?projectId=${projectId}`);
   },
 
   // ── logEvents 经 reportEvent 直发 /api/events（带 projectId）──

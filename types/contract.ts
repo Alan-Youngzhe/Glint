@@ -195,6 +195,27 @@ export interface AgentRequest {
   message: string;
 }
 
+// ===== 泛化检索（四期 B · V4 §8） =====
+export interface SimilarHit {
+  ref: string;
+  at: string;
+  similarity: number;
+  note?: string;
+}
+export interface GeneralizeResult {
+  focus: Focus;
+  hits: SimilarHit[];
+}
+
+// ===== 成长分析（四期 D · V4 §8） =====
+export interface WeakPoint {
+  slug: string;
+  name: string;
+  askCount: number;
+  trend: "up" | "down" | "flat";
+  mastery: number;
+}
+
 /** 来源标签（DS §15.3）：把 CardPayload.source 映射成给小白的信任/成本信号。 */
 export function provenanceLabel(s: CardPayload["source"]): string {
   return {

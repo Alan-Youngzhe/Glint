@@ -90,6 +90,19 @@ export const mockApi: GlintApi = {
     yield { type: "done" as const, messageId: "mock" };
   },
 
+  async search(req) {
+    await delay();
+    return { focus: req.focus, hits: [] };
+  },
+
+  async weakPoints(_projectId) {
+    await delay();
+    return [
+      { slug: "async", name: "异步", askCount: 5, trend: "up" as const, mastery: 0.4 },
+      { slug: "guard-clause", name: "守卫语句", askCount: 2, trend: "flat" as const, mastery: 0.7 },
+    ];
+  },
+
   async logEvents(events): Promise<void> {
     if (process.env.NODE_ENV !== "production") {
       // eslint-disable-next-line no-console

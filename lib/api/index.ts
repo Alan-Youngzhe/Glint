@@ -9,6 +9,7 @@ import type {
   ArchitecturePayload,
   CardPayload,
   FileContent,
+  GeneralizeResult,
   InteractionEvent,
   TechItem,
   TechLiteracy,
@@ -16,6 +17,7 @@ import type {
   UnderstandRequest,
   UnderstandResponse,
   UnderstandStreamChunk,
+  WeakPoint,
 } from "@/types/contract";
 
 export interface GlintApi {
@@ -29,6 +31,8 @@ export interface GlintApi {
   techstack(projectId: string): Promise<TechItem[]>;
   tech(slug: string): Promise<TechLiteracy>;
   agent(req: AgentRequest): AsyncIterable<AgentEvent>;
+  search(req: { projectId: string; focus: import("@/types/contract").Focus }): Promise<GeneralizeResult>;
+  weakPoints(projectId: string): Promise<WeakPoint[]>;
   logEvents(events: InteractionEvent[]): Promise<void>;
 }
 
@@ -38,6 +42,7 @@ export type {
   ArchitecturePayload,
   CardPayload,
   FileContent,
+  GeneralizeResult,
   InteractionEvent,
   TechItem,
   TechLiteracy,
@@ -45,6 +50,7 @@ export type {
   UnderstandRequest,
   UnderstandResponse,
   UnderstandStreamChunk,
+  WeakPoint,
 };
 
 import { mockApi } from "./mock";
