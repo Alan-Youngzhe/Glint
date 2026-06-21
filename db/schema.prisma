@@ -422,9 +422,10 @@ model CodeChunk {
   symbol         String?
   astFingerprint String?  @map("ast_fingerprint")
   normalizedText String?  @map("normalized_text")
-  // P1: 启用 pgvector 后加 embedding 列（Unsupported("vector(1536)") + ivfflat/hnsw 索引）
+  embedding      Unsupported("vector(1536)")? // 四期 C：嵌入；hnsw 索引由 SQL 迁移建
 
   @@index([projectId, fileId])
+  @@index([astFingerprint])
   @@map("code_chunks")
 }
 
