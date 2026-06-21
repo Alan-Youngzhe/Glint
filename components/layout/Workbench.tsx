@@ -4,6 +4,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { ThemeToggle, type Theme } from "./ThemeToggle";
 import { ProjectBar } from "@/components/shell/ProjectBar";
+import { GlobalKeys } from "@/components/shell/GlobalKeys";
+import { FloatingCard } from "@/components/card/FloatingCard";
+import { TrajectoryBar } from "@/components/card/TrajectoryBar";
 
 const DockShell = dynamic(
   () => import("./DockShell").then((m) => m.DockShell),
@@ -77,9 +80,13 @@ export function Workbench() {
         </div>
       </header>
 
-      <main className="min-h-0 flex-1">
+      <main className="relative min-h-0 flex-1">
         <DockShell theme={theme} />
+        <FloatingCard />
       </main>
+
+      <TrajectoryBar />
+      <GlobalKeys />
     </div>
   );
 }
