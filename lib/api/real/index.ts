@@ -5,6 +5,8 @@
  */
 import type { GlintApi } from "@/lib/api";
 import type {
+  AgentEvent,
+  AgentRequest,
   ArchitecturePayload,
   FileContent,
   TechItem,
@@ -15,6 +17,32 @@ import type {
   UnderstandStreamChunk,
 } from "@/types/contract";
 import { mockApi } from "@/lib/api/mock";
+
+/** 通用 SSE 解析（data: {json}）。 */
+async function* sse<T>(url: string, body: unknown): AsyncIterable<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.body) return;
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const parts = buf.split("\n\n");
+    buf = parts.pop() ?? "";
+    for (const p of parts) {
+      const line = p.trim();
+      if (!line.startsWith("data:")) continue;
+      const json = line.slice(5).trim();
+      if (json) yield JSON.parse(json) as T;
+    }
+  }
+}
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -32,33 +60,6 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** 解析 SSE（data: {json}）流为 UnderstandStreamChunk。 */
-async function* sseUnderstand(
-  req: UnderstandRequest,
-): AsyncIterable<UnderstandStreamChunk> {
-  const res = await fetch("/api/understand", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(req),
-  });
-  if (!res.body) return;
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buf = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    const parts = buf.split("\n\n");
-    buf = parts.pop() ?? "";
-    for (const p of parts) {
-      const line = p.trim();
-      if (!line.startsWith("data:")) continue;
-      const json = line.slice(5).trim();
-      if (json) yield JSON.parse(json) as UnderstandStreamChunk;
-    }
-  }
-}
 
 export const realApi: GlintApi = {
   // ── 已接通（M1）──
@@ -87,10 +88,12 @@ export const realApi: GlintApi = {
     return postJson<UnderstandResponse>("/api/understand", req);
   },
   understandStream(req: UnderstandRequest) {
-    return sseUnderstand(req);
+    return sse<UnderstandStreamChunk>("/api/understand", req);
+  },
+  agent(req: AgentRequest) {
+    return sse<AgentEvent>("/api/agent", req);
   },
 
-  // ── 未接通：Agent 在三期 Agent Bar 段接通；logEvents 经 reportEvent 直发 /api/events ──
-  agent: mockApi.agent,
+  // ── logEvents 经 reportEvent 直发 /api/events（带 projectId）──
   logEvents: mockApi.logEvents,
 };

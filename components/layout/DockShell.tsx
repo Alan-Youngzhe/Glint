@@ -12,12 +12,14 @@ import { FileTreePanel } from "@/components/tree/FileTreePanel";
 import { CodePanel } from "@/components/code/CodePanel";
 import { TechStackPanel } from "@/components/techstack/TechStackPanel";
 import { InsightPanel } from "@/components/graph/InsightPanel";
+import { AgentPanel } from "@/components/agent/AgentPanel";
 
 const components = {
   filetree: () => <FileTreePanel />,
   code: () => <CodePanel />,
   insight: () => <InsightPanel />,
   techstack: () => <TechStackPanel />,
+  agent: () => <AgentPanel />,
 };
 
 function onReady(event: DockviewReadyEvent) {
@@ -43,11 +45,18 @@ function onReady(event: DockviewReadyEvent) {
     position: { referencePanel: code.id, direction: "right" },
   });
 
-  api.addPanel({
+  const techstack = api.addPanel({
     id: "techstack",
     component: "techstack",
     title: "技术栈",
     position: { referencePanel: insight.id, direction: "below" },
+  });
+
+  api.addPanel({
+    id: "agent",
+    component: "agent",
+    title: "Agent",
+    position: { referencePanel: techstack.id, direction: "within" },
   });
 
   explorer.api.setSize({ width: 240 });
