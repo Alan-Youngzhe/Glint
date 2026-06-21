@@ -3,6 +3,7 @@ import path from "node:path";
 import { prisma } from "@/lib/db";
 import { STORAGE_ROOT } from "@/lib/import";
 import { runTaskSafe } from "@/lib/ai";
+import { writeQueryLog } from "./log";
 import type {
   CardPayload,
   CodeExplanation,
@@ -86,5 +87,6 @@ export async function* understandStream(
     await new Promise((r) => setTimeout(r, 8));
     yield { delta: ch };
   }
+  writeQueryLog(req.projectId, req.focus, card);
   yield { done: card };
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getArchitecture } from "@/lib/pregen/architecture";
+import { writeQueryLog } from "./log";
 import type {
   CallGraphPayload,
   CardPayload,
@@ -23,8 +24,11 @@ export async function understand(
     case 4:
       return { ...(await getArchitecture(req.projectId)), focus: req.focus };
     case 1:
-    default:
-      return cardFor(req);
+    default: {
+      const card = await cardFor(req);
+      writeQueryLog(req.projectId, req.focus, card);
+      return card;
+    }
   }
 }
 
