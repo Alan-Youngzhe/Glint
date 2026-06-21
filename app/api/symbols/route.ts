@@ -28,7 +28,14 @@ export async function GET(req: NextRequest) {
   const [symbols, totals, edgesRaw] = await Promise.all([
     prisma.symbol.findMany({
       where: { projectId, ...(fileId ? { fileId } : {}) },
-      select: { name: true, kind: true, startLine: true, endLine: true, qualifiedName: true },
+      select: {
+        id: true,
+        name: true,
+        kind: true,
+        startLine: true,
+        endLine: true,
+        qualifiedName: true,
+      },
       orderBy: { startLine: "asc" },
     }),
     Promise.all([
