@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/db";
 import { STORAGE_ROOT } from "@/lib/import";
-import { createParser, grammarForPath, type Grammar, type TSParser } from "./loader";
+import { createParser, grammarForPath, resetRuntime, type Grammar, type TSParser } from "./loader";
 import {
   extractCalls,
   extractChunks,
@@ -34,8 +34,22 @@ const KIND_RANK: Record<SymKind, number> = {
   variable: 3,
 };
 
-/** 解析项目所有可识别源文件 → symbols / symbol_refs / call_edges（确定性，可重入）。 */
+/**
+ * 解析项目所有可识别源文件 → symbols / symbol_refs / call_edges（确定性，可重入）。
+ * 偶发降级（WASM 状态污染）兜底：一次 runParse 若可解析文件存在却产出 0 符号，
+ * 重置运行时并重试一次。
+ */
 export async function parseProject(projectId: string): Promise<ParseResult> {
+  try {
+    return await runParse(projectId);
+  } catch (e) {
+    resetRuntime();
+    console.warn("[parse] 首次失败，重置运行时重试:", e instanceof Error ? e.message : e);
+    return await runParse(projectId);
+  }
+}
+
+async function runParse(projectId: string): Promise<ParseResult> {
   const files = await prisma.file.findMany({
     where: { projectId },
     select: { id: true, relPath: true },
@@ -59,7 +73,15 @@ export async function parseProject(projectId: string): Promise<ParseResult> {
     } catch {
       continue;
     }
-    const tree = parser.parse(content);
+    let tree = parser.parse(content);
+    // 偶发降级兜底：解析失败或产生 ERROR 节点时，用全新 parser 重解析一次。
+    if (!tree || tree.rootNode.hasError()) {
+      tree?.delete();
+      parser.delete();
+      parser = await createParser(grammar);
+      parsers.set(grammar, parser);
+      tree = parser.parse(content);
+    }
     if (!tree) continue;
     const symbols = extractSymbols(tree.rootNode, grammar);
     const calls = extractCalls(tree.rootNode, grammar);

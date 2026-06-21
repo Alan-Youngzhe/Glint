@@ -47,7 +47,6 @@ export function grammarForPath(rel: string): Grammar | null {
 }
 
 let initPromise: Promise<void> | null = null;
-const langCache = new Map<Grammar, Parser.Language>();
 
 function ensureInit(): Promise<void> {
   if (!initPromise) {
@@ -58,14 +57,14 @@ function ensureInit(): Promise<void> {
   return initPromise;
 }
 
+/**
+ * 不跨 parseProject 缓存 Language：每次上传都用干净的 grammar 实例，避免长生命周期
+ * dev server 多次解析后 WASM 状态累积污染（偶发漏边）。run 内由 parseProject 自行复用。
+ */
 export async function loadLanguage(grammar: Grammar): Promise<Parser.Language> {
-  const cached = langCache.get(grammar);
-  if (cached) return cached;
   await ensureInit();
   const bytes = await readFile(path.join(GRAMMAR_DIR, GRAMMAR_FILE[grammar]));
-  const language = await ctor().Language.load(new Uint8Array(bytes));
-  langCache.set(grammar, language);
-  return language;
+  return ctor().Language.load(new Uint8Array(bytes));
 }
 
 export async function createParser(grammar: Grammar): Promise<Parser> {
@@ -74,4 +73,9 @@ export async function createParser(grammar: Grammar): Promise<Parser> {
   const parser = new P();
   parser.setLanguage(language);
   return parser;
+}
+
+/** 重置运行时（解析失败重试前调用，强制下次重新 init WASM）。 */
+export function resetRuntime(): void {
+  initPromise = null;
 }

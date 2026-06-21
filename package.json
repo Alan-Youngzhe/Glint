@@ -11,6 +11,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "e2e": "node tests/e2e.mjs",
+    "parse:stress": "node tests/parse-stress.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio"
