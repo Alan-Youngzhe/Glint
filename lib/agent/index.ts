@@ -1,5 +1,6 @@
 import { prisma, ensureDefaultUser } from "@/lib/db";
 import { runTaskSafe } from "@/lib/ai";
+import { retrieve } from "@/lib/rag";
 import type { AgentEvent, Citation, Suggestion } from "@/types/contract";
 
 /**
@@ -17,10 +18,16 @@ export async function* agentLoop(
     prisma.techStackItem.findMany({ where: { projectId }, select: { name: true, kind: true } }),
   ]);
 
+  // RAG：按问题跨文件检索相关代码（V4 §5）
+  const rag = await retrieve(projectId, message);
+  const ragCtx = rag.snippets.length
+    ? `\n相关代码：\n${rag.snippets.map((s) => `- ${s.at} ${s.ref}`).join("\n")}`
+    : "";
+
   const ctx =
     `架构概述：${analysis?.architectureOverview ?? "（无）"}。\n` +
     `模块：${modules.map((m) => m.name).join("、") || "（无）"}。\n` +
-    `技术栈：${tech.map((t) => t.name).join("、") || "（无）"}。`;
+    `技术栈：${tech.map((t) => t.name).join("、") || "（无）"}。${ragCtx}`;
 
   const llm = await runTaskSafe("explain", [
     {
@@ -39,12 +46,11 @@ export async function* agentLoop(
     yield { type: "token", delta: ch };
   }
 
-  // 引用：模块（点击跳焦点）
-  const citations: Citation[] = modules.slice(0, 4).map((m) => ({
-    label: m.name,
-    ref: m.name,
-    kind: "node",
-  }));
+  // 引用：检索命中的文件（RAG）+ 模块
+  const citations: Citation[] = [
+    ...rag.citations.slice(0, 4),
+    ...modules.slice(0, 2).map((m) => ({ label: m.name, ref: m.name, kind: "node" as const })),
+  ];
   for (const c of citations) yield { type: "citation", citation: c };
 
   // 建议（每条带 action，驱动界面）
