@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { X } from "lucide-react";
 import { useTrajectory } from "@/stores/trajectory";
+import { useWorkspace } from "@/stores/workspace";
 import { dispatchDimension } from "@/lib/uiactions";
-import { provenanceLabel, type Focus, type FocusType } from "@/types/contract";
+import { api } from "@/lib/api";
+import { provenanceLabel, type Focus, type FocusType, type SimilarHit } from "@/types/contract";
 
 const BADGE: Record<FocusType, string> = {
   selection: "SELECTION",
@@ -20,11 +23,20 @@ export function FloatingCard() {
   const items = useTrajectory((s) => s.items);
   const activeId = useTrajectory((s) => s.activeId);
   const close = useTrajectory((s) => s.close);
+  const projectId = useWorkspace((s) => s.projectId);
+  const [hits, setHits] = useState<SimilarHit[] | null>(null);
   const item = items.find((i) => i.id === activeId && i.status === "active");
   if (!item) return null;
 
   const { payload, focus, deltas } = item;
   const provenance = payload ? provenanceLabel(payload.source) : "实时 · 调 AI 解释";
+  const canGeneralize = focus.type === "function" || focus.type === "class";
+
+  async function findSimilar() {
+    if (!projectId) return;
+    const res = await api.search({ projectId, focus });
+    setHits(res.hits);
+  }
 
   return (
     <div className="pointer-events-auto absolute bottom-3 left-3 z-30 w-[360px] max-w-[calc(100%-24px)] rounded-md border border-border bg-surface-elevated shadow-3">
@@ -96,11 +108,30 @@ export function FloatingCard() {
             {deltas || "…"}
           </p>
         )}
+
+        {/* 泛化：相似写法（B） */}
+        {hits && (
+          <div className="mt-2 border-t border-border pt-2">
+            <div className="text-caption text-accent-text">
+              相似写法 {hits.length} 处
+            </div>
+            {hits.length ? (
+              hits.slice(0, 8).map((h, i) => (
+                <div key={i} className="text-caption text-text-tertiary">
+                  {h.at}（{h.note}）
+                </div>
+              ))
+            ) : (
+              <div className="text-caption text-text-tertiary">未发现结构相同的写法</div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-2 border-t border-border px-3 py-2">
+      <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2">
         <Action onClick={() => dispatchDimension(focus as Focus, 2)}>⌥2 谁调用 →</Action>
         <Action onClick={() => dispatchDimension(focus as Focus, 4)}>⌥4 在哪 →</Action>
+        {canGeneralize && <Action onClick={findSimilar}>相似写法 →</Action>}
       </div>
     </div>
   );

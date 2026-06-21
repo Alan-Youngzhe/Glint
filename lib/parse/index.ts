@@ -5,8 +5,10 @@ import { STORAGE_ROOT } from "@/lib/import";
 import { createParser, grammarForPath, type Grammar, type TSParser } from "./loader";
 import {
   extractCalls,
+  extractChunks,
   extractSymbols,
   type ExtractedCall,
+  type ExtractedChunk,
   type ExtractedSymbol,
   type SymKind,
 } from "./extract";
@@ -22,6 +24,7 @@ interface FileWork {
   relPath: string;
   symbols: (ExtractedSymbol & { id?: string })[];
   calls: ExtractedCall[];
+  chunks: ExtractedChunk[];
 }
 
 const KIND_RANK: Record<SymKind, number> = {
@@ -60,8 +63,9 @@ export async function parseProject(projectId: string): Promise<ParseResult> {
     if (!tree) continue;
     const symbols = extractSymbols(tree.rootNode, grammar);
     const calls = extractCalls(tree.rootNode, grammar);
+    const chunks = extractChunks(tree.rootNode, grammar);
     tree.delete();
-    work.push({ fileId: f.id, relPath: f.relPath, symbols, calls });
+    work.push({ fileId: f.id, relPath: f.relPath, symbols, calls, chunks });
   }
   parsers.forEach((p) => p.delete());
 
@@ -170,6 +174,22 @@ export async function parseProject(projectId: string): Promise<ParseResult> {
     refCount: e.count,
   }));
   if (edgeRows.length) await prisma.callEdge.createMany({ data: edgeRows });
+
+  // code_chunks（泛化检索 B 的结构指纹底座）
+  await prisma.codeChunk.deleteMany({ where: { projectId } });
+  const chunkRows = work.flatMap((w) =>
+    w.chunks.map((c) => ({
+      projectId,
+      fileId: w.fileId,
+      startLine: c.startLine,
+      endLine: c.endLine,
+      kind: c.kind,
+      symbol: `${w.relPath}#${c.symbol}`,
+      astFingerprint: c.fingerprint,
+      normalizedText: c.normalized,
+    })),
+  );
+  if (chunkRows.length) await prisma.codeChunk.createMany({ data: chunkRows });
 
   return { symbols: symbolRows.length, refs: refRows.length, edges: edgeRows.length };
 }

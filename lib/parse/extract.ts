@@ -18,6 +18,34 @@ export interface ExtractedCall {
   index: number; // 字节偏移，用于定位调用所在的外层符号
 }
 
+export interface ExtractedChunk {
+  symbol: string;
+  kind: SymKind;
+  startLine: number;
+  endLine: number;
+  fingerprint: string; // 结构指纹（节点类型序列哈希，变量名无关）
+  normalized: string;
+}
+
+/** djb2 字符串哈希。 */
+function hashStr(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/** 前序遍历收集 node.type 序列（保留结构、忽略标识符文本），上限 600 节点。 */
+function typeSeq(node: Node): string {
+  const types: string[] = [];
+  const walk = (n: Node) => {
+    if (types.length > 600) return;
+    types.push(n.type);
+    n.namedChildren.forEach(walk);
+  };
+  walk(node);
+  return types.join(",");
+}
+
 function firstLine(text: string): string {
   const line = text.split("\n", 1)[0].trim();
   return line.length > 160 ? line.slice(0, 160) : line;
@@ -104,6 +132,37 @@ export function extractCalls(root: Node, grammar: Grammar): ExtractedCall[] {
     });
   }
 
+  return out;
+}
+
+/** 抽取函数/方法块 + 结构指纹（泛化检索 B 用）。 */
+export function extractChunks(root: Node, grammar: Grammar): ExtractedChunk[] {
+  const out: ExtractedChunk[] = [];
+  const push = (node: Node, name: string | undefined, kind: SymKind) => {
+    if (!node || !name) return;
+    out.push({
+      symbol: name,
+      kind,
+      startLine: node.startPosition.row + 1,
+      endLine: node.endPosition.row + 1,
+      fingerprint: hashStr(typeSeq(node)),
+      normalized: node.text.slice(0, 300),
+    });
+  };
+
+  if (JS_FAMILY.includes(grammar)) {
+    root
+      .descendantsOfType(["function_declaration", "generator_function_declaration"])
+      .forEach((n) => push(n, n.childForFieldName("name")?.text, "function"));
+    root
+      .descendantsOfType("method_definition")
+      .forEach((n) => push(n, n.childForFieldName("name")?.text, "method"));
+  } else if (grammar === "python") {
+    root.descendantsOfType("function_definition").forEach((n) => {
+      const inClass = isInside(n, "class_definition");
+      push(n, n.childForFieldName("name")?.text, inClass ? "method" : "function");
+    });
+  }
   return out;
 }
 
