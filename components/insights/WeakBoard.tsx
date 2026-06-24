@@ -29,7 +29,7 @@ export function WeakBoard() {
     <div className="flex h-full flex-col bg-surface">
       <div className="flex h-8 shrink-0 items-center justify-between px-3">
         <span className="font-pixel text-pixel-label uppercase tracking-wide text-text-tertiary">
-          成长 · 弱项
+          Growth · Weak spots
         </span>
         {projectId && (
           <button
@@ -37,15 +37,15 @@ export function WeakBoard() {
             onClick={() => api.weakPoints(projectId).then(setItems).catch(() => {})}
             className="text-caption text-text-tertiary hover:text-text"
           >
-            刷新
+            Refresh
           </button>
         )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto px-3 pb-3">
-        {!projectId && <Hint text="先选择一个项目" />}
+        {!projectId && <Hint text="Select a project first" />}
         {projectId && items && !items.length && (
-          <Hint text="多按几次 ⌥1–⌥4 探索后，这里会显示你反复琢磨的地方" />
+          <Hint text="Explore with ⌥1–⌥4 a few times — spots you revisit show up here" />
         )}
         {items?.map((w) => (
           <button
@@ -57,7 +57,7 @@ export function WeakBoard() {
             <div className="flex items-center justify-between">
               <span className="truncate text-body-sm text-text">{w.name}</span>
               <span className="shrink-0 text-caption text-text-tertiary">
-                问 {w.askCount} 次 {TREND[w.trend]}
+                asked {w.askCount}× {TREND[w.trend]}
               </span>
             </div>
             <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-bg-subtle">
@@ -67,7 +67,7 @@ export function WeakBoard() {
               />
             </div>
             <div className="mt-0.5 text-pixel-label uppercase text-text-tertiary">
-              掌握度 {Math.round(w.mastery * 100)}%
+              Mastery {Math.round(w.mastery * 100)}%
             </div>
           </button>
         ))}

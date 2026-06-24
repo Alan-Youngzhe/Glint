@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "缺少 file（zip）" }, { status: 400 });
+      return NextResponse.json({ error: "Missing file (zip)" }, { status: 400 });
     }
     const name =
       (form.get("name") as string | null) ??

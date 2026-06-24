@@ -219,11 +219,11 @@ export interface WeakPoint {
 /** 来源标签（DS §15.3）：把 CardPayload.source 映射成给小白的信任/成本信号。 */
 export function provenanceLabel(s: CardPayload["source"]): string {
   return {
-    realtime: "实时 · 调 AI 解释",
-    file_summaries: "预生成 · 库内直读",
-    modules: "预生成 · 库内直读",
-    ast: "AST · 确定",
-    symbol_card: "懒生成 · 已缓存",
+    realtime: "Realtime · AI",
+    file_summaries: "Prebuilt · cached",
+    modules: "Prebuilt · cached",
+    ast: "AST · exact",
+    symbol_card: "Lazy · cached",
   }[s];
 }
 

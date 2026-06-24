@@ -12,7 +12,7 @@ export function ExecPath({ payload }: { payload: ExecPathPayload }) {
         </div>
       )}
       {!payload.steps.length && (
-        <p className="text-caption text-text-tertiary">无可用执行路径。</p>
+        <p className="text-caption text-text-tertiary">No exec path available.</p>
       )}
       <ol className="relative ml-3 border-l border-border">
         {payload.steps.map((s) => (

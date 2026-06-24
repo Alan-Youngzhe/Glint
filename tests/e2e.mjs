@@ -144,7 +144,7 @@ async function main() {
     dimension: 1,
   });
   ok("⌥1 文件卡 kind=card", card.kind === "card");
-  ok("⌥1 文件卡有摘要", typeof card.summary === "string" && card.summary.includes("函数"));
+  ok("⌥1 文件卡有摘要", typeof card.summary === "string" && /function/i.test(card.summary));
 
   const arch = await postJSON("/api/understand", {
     projectId: pid,

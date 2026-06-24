@@ -82,7 +82,7 @@ export function CodePanel() {
                 ref: activeFilePath,
                 selection: { fileId: activeFilePath, startLine, startCol: 0, endLine, endCol: 0 },
               },
-              "实时 · 调 AI 解释",
+              "Realtime · AI",
             );
           } else {
             setSelection(null);
@@ -127,7 +127,7 @@ export function CodePanel() {
     <div className="flex h-full flex-col bg-surface">
       <div className="flex h-8 shrink-0 items-center justify-between border-b border-border px-3">
         <span className="truncate text-body-sm text-text-secondary">
-          {activeFilePath ?? "未选择文件"}
+          {activeFilePath ?? "No file selected"}
         </span>
         {lang && (
           <span className="font-pixel text-pixel-label uppercase text-text-tertiary">
@@ -139,12 +139,12 @@ export function CodePanel() {
       <div className="relative min-h-0 flex-1">
         {error && (
           <p className="absolute inset-0 flex items-center justify-center text-caption text-danger">
-            加载失败：{error}
+            Failed: {error}
           </p>
         )}
         {!activeFilePath && !error && (
           <p className="absolute inset-0 flex items-center justify-center text-caption text-text-tertiary">
-            从左侧选择一个文件
+            Select a file on the left
           </p>
         )}
         <div ref={hostRef} className="h-full w-full overflow-auto" />

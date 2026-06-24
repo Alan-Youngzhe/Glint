@@ -29,7 +29,7 @@ export function FloatingCard() {
   if (!item) return null;
 
   const { payload, focus, deltas } = item;
-  const provenance = payload ? provenanceLabel(payload.source) : "实时 · 调 AI 解释";
+  const provenance = payload ? provenanceLabel(payload.source) : "Realtime · AI";
   const canGeneralize = focus.type === "function" || focus.type === "class";
 
   async function findSimilar() {
@@ -51,23 +51,23 @@ export function FloatingCard() {
           type="button"
           onClick={() => close(item.id)}
           className="ml-auto text-text-tertiary hover:text-text"
-          aria-label="关闭"
+          aria-label="Close"
         >
           <X size={14} />
         </button>
       </div>
 
       <div className="max-h-[40vh] overflow-auto px-3 py-2.5">
-        <div className="mb-1 text-h4 font-semibold text-text">{payload?.title ?? "理解中…"}</div>
+        <div className="mb-1 text-h4 font-semibold text-text">{payload?.title ?? "Loading…"}</div>
 
-        {/* selection：三段 */}
+        {/* selection: sections */}
         {payload?.explanation && (
           <div className="space-y-2">
             {payload.explanation.role && (
-              <Section title="这段在做什么" body={payload.explanation.role} />
+              <Section title="What it does" body={payload.explanation.role} />
             )}
             {payload.explanation.positionInContext && (
-              <Section title="在上下文中的位置" body={payload.explanation.positionInContext} />
+              <Section title="Where it sits" body={payload.explanation.positionInContext} />
             )}
             {!!payload.explanation.syntax?.length && (
               <div className="flex flex-wrap gap-1">
@@ -79,13 +79,13 @@ export function FloatingCard() {
           </div>
         )}
 
-        {/* variable：引用 */}
+        {/* variable: refs */}
         {payload?.variableRefs && (
           <div className="space-y-1 text-body-sm text-text-secondary">
-            <div>定义于 {payload.variableRefs.definedAt}</div>
+            <div>Defined at {payload.variableRefs.definedAt}</div>
             <div>
-              读 {payload.variableRefs.reads} · 写 {payload.variableRefs.writes} · 使用{" "}
-              {payload.variableRefs.usedBy.length} 处
+              {payload.variableRefs.reads} reads · {payload.variableRefs.writes} writes ·{" "}
+              {payload.variableRefs.usedBy.length} uses
             </div>
             {payload.variableRefs.usedBy.slice(0, 6).map((u, i) => (
               <div key={i} className="text-caption text-text-tertiary">
@@ -113,25 +113,25 @@ export function FloatingCard() {
         {hits && (
           <div className="mt-2 border-t border-border pt-2">
             <div className="text-caption text-accent-text">
-              相似写法 {hits.length} 处
+              {hits.length} similar
             </div>
             {hits.length ? (
               hits.slice(0, 8).map((h, i) => (
                 <div key={i} className="text-caption text-text-tertiary">
-                  {h.at}（{h.note}）
+                  {h.at} ({h.note})
                 </div>
               ))
             ) : (
-              <div className="text-caption text-text-tertiary">未发现结构相同的写法</div>
+              <div className="text-caption text-text-tertiary">No structurally similar code</div>
             )}
           </div>
         )}
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2">
-        <Action onClick={() => dispatchDimension(focus as Focus, 2)}>⌥2 谁调用 →</Action>
-        <Action onClick={() => dispatchDimension(focus as Focus, 4)}>⌥4 在哪 →</Action>
-        {canGeneralize && <Action onClick={findSimilar}>相似写法 →</Action>}
+        <Action onClick={() => dispatchDimension(focus as Focus, 2)}>⌥2 Who calls →</Action>
+        <Action onClick={() => dispatchDimension(focus as Focus, 4)}>⌥4 Where →</Action>
+        {canGeneralize && <Action onClick={findSimilar}>Similar →</Action>}
       </div>
     </div>
   );

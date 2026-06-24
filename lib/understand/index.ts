@@ -99,7 +99,7 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
       from: e.callerSymbolId,
       to: e.calleeSymbolId,
       relation: "calls" as const,
-      nl: `${byId.get(e.callerSymbolId)!.name} 调用 ${byId.get(e.calleeSymbolId)!.name}`,
+      nl: `${byId.get(e.callerSymbolId)!.name} calls ${byId.get(e.calleeSymbolId)!.name}`,
     }));
 
   return {
@@ -149,7 +149,7 @@ async function execPathFor(req: UnderstandRequest): Promise<ExecPathPayload> {
           order: order++,
           symbol: s.name,
           at: `${relById.get(s.fileId) ?? "?"}:${s.startLine}`,
-          describe: depth === 0 ? "入口" : `第 ${depth} 步`,
+          describe: depth === 0 ? "Entry" : `Step ${depth}`,
         });
       }
       for (const c of calleesOf.get(id) ?? []) visit(c, depth + 1);
@@ -161,7 +161,7 @@ async function execPathFor(req: UnderstandRequest): Promise<ExecPathPayload> {
     kind: "execpath",
     focus,
     steps,
-    note: "近似路径：基于静态调用边推断，动态分支未展开（四期深化）。",
+    note: "Approximate path: inferred from static call edges; dynamic branches not expanded (deepened in M4).",
     source: "call_edges(approx)",
   };
 }
@@ -173,7 +173,7 @@ async function cardFor(req: UnderstandRequest): Promise<CardPayload> {
   if (focus.type === "variable" || focus.type === "function" || focus.type === "class") {
     const sym = await prisma.symbol.findUnique({ where: { id: focus.ref } });
     if (!sym) {
-      return { kind: "card", focus, title: focus.ref, source: "ast", summary: "（未找到符号）" };
+      return { kind: "card", focus, title: focus.ref, source: "ast", summary: "(symbol not found)" };
     }
     const file = await prisma.file.findUnique({ where: { id: sym.fileId }, select: { relPath: true } });
 
@@ -212,7 +212,7 @@ async function cardFor(req: UnderstandRequest): Promise<CardPayload> {
       title: sym.name,
       source: "symbol_card",
       canPin: true,
-      summary: `${sym.kind} ${sym.name}（${file?.relPath ?? ""}:${sym.startLine}）。被 ${callers} 处调用，调用了 ${callees} 个目标。${sym.signature ? `\n签名：${sym.signature}` : ""}`,
+      summary: `${sym.kind} ${sym.name} (${file?.relPath ?? ""}:${sym.startLine}). Called from ${callers} place(s), calls ${callees} target(s).${sym.signature ? `\nSignature: ${sym.signature}` : ""}`,
       drillTo: { scope: sym.qualifiedName ?? sym.name },
     };
   }
@@ -228,8 +228,8 @@ async function cardFor(req: UnderstandRequest): Promise<CardPayload> {
       source: "modules",
       canPin: true,
       summary: mod
-        ? `${mod.responsibility ?? ""}${(mod.dependsOn as string[] | null)?.length ? `\n依赖：${(mod.dependsOn as string[]).join("、")}` : ""}`
-        : "（无模块信息）",
+        ? `${mod.responsibility ?? ""}${(mod.dependsOn as string[] | null)?.length ? `\nDepends on: ${(mod.dependsOn as string[]).join(", ")}` : ""}`
+        : "(no module info)",
     };
   }
 
@@ -239,7 +239,7 @@ async function cardFor(req: UnderstandRequest): Promise<CardPayload> {
     select: { id: true, relPath: true, lang: true, loc: true },
   });
   if (!file) {
-    return { kind: "card", focus, title: focus.ref, source: "file_summaries", summary: "（未找到文件）" };
+    return { kind: "card", focus, title: focus.ref, source: "file_summaries", summary: "(file not found)" };
   }
   const syms = await prisma.symbol.findMany({
     where: { projectId, fileId: file.id },
@@ -254,6 +254,6 @@ async function cardFor(req: UnderstandRequest): Promise<CardPayload> {
     title: file.relPath,
     source: "file_summaries",
     canPin: true,
-    summary: `${file.lang} 文件，${file.loc} 行。定义了 ${fns.length} 个函数${classes.length ? `、${classes.length} 个类` : ""}${fns.length ? `：${fns.slice(0, 6).map((s) => s.name).join("、")}` : ""}。`,
+    summary: `${file.lang} file, ${file.loc} lines. Defines ${fns.length} function(s)${classes.length ? `, ${classes.length} class(es)` : ""}${fns.length ? `: ${fns.slice(0, 6).map((s) => s.name).join(", ")}` : ""}.`,
   };
 }

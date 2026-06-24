@@ -12,12 +12,12 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const provider = (sp.get("provider") ?? "anthropic") as Provider;
-  const prompt = sp.get("prompt") ?? "用一句话说明你是谁。";
+  const prompt = sp.get("prompt") ?? "Say who you are in one sentence.";
   const model = sp.get("model") ?? undefined;
 
   if (provider !== "anthropic" && provider !== "openai") {
     return NextResponse.json(
-      { error: "provider 必须为 anthropic 或 openai" },
+      { error: "provider must be anthropic or openai" },
       { status: 400 },
     );
   }

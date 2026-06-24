@@ -144,14 +144,14 @@ export function FileTreePanel() {
       <div className="min-h-0 flex-1 overflow-auto py-1">
         {!projectId && (
           <p className="px-3 py-2 text-caption text-text-tertiary">
-            从顶部「导入项目」或选择一个项目
+            Import or select a project above
           </p>
         )}
         {error && (
-          <p className="px-3 py-2 text-caption text-danger">加载失败：{error}</p>
+          <p className="px-3 py-2 text-caption text-danger">Failed: {error}</p>
         )}
         {projectId && !tree && !error && (
-          <p className="px-3 py-2 text-caption text-text-tertiary">加载中…</p>
+          <p className="px-3 py-2 text-caption text-text-tertiary">Loading…</p>
         )}
         {tree?.children?.map((child) => (
           <TreeRow

@@ -7,9 +7,9 @@ import { ArchPanel } from "@/components/treemap/ArchPanel";
 import { cn } from "@/lib/utils";
 
 const TABS: { key: InsightTab; keycap: string; label: string }[] = [
-  { key: "call", keycap: "⌥2", label: "调用关系" },
-  { key: "flow", keycap: "⌥3", label: "执行路径" },
-  { key: "arch", keycap: "⌥4", label: "架构鸟瞰" },
+  { key: "call", keycap: "⌥2", label: "Call graph" },
+  { key: "flow", keycap: "⌥3", label: "Exec path" },
+  { key: "arch", keycap: "⌥4", label: "Architecture" },
 ];
 
 /** 右侧 INSIGHT 单面板 + 三 Tab（DS §15.5）。切 Tab 不切焦点。 */
@@ -49,7 +49,7 @@ export function InsightPanel() {
           </button>
         ))}
         {loading && (
-          <span className="ml-auto text-caption text-text-tertiary">加载…</span>
+          <span className="ml-auto text-caption text-text-tertiary">Loading…</span>
         )}
       </div>
 
@@ -58,13 +58,13 @@ export function InsightPanel() {
           (call && call.nodes.length ? (
             <CallGraph payload={call} />
           ) : (
-            <Empty hint="选中一个函数/文件，按 ⌥2 看谁调用谁" />
+            <Empty hint="Select a function/file, press ⌥2 to see who calls what" />
           ))}
         {tab === "flow" &&
           (flow ? (
             <ExecPath payload={flow} />
           ) : (
-            <Empty hint="选中一个函数，按 ⌥3 看执行路径" />
+            <Empty hint="Select a function, press ⌥3 to see the exec path" />
           ))}
         {tab === "arch" && <ArchPanel />}
       </div>

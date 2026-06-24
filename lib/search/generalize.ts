@@ -46,7 +46,7 @@ export async function generalize(
     ref: p.symbol ?? "",
     at: `${relById.get(p.fileId) ?? "?"}:${p.startLine}`,
     similarity: 1,
-    note: "结构相同",
+    note: "same structure",
   }));
 
   return { focus, hits };

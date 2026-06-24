@@ -6,15 +6,15 @@ import type { Dimension, Focus } from "@/types/contract";
 import { cn } from "@/lib/utils";
 
 const DIMS: { dim: Dimension; keycap: string; label: string }[] = [
-  { dim: 1, keycap: "⌥1", label: "为什么" },
-  { dim: 2, keycap: "⌥2", label: "谁调用" },
-  { dim: 3, keycap: "⌥3", label: "怎么执行" },
-  { dim: 4, keycap: "⌥4", label: "在哪" },
+  { dim: 1, keycap: "⌥1", label: "Why" },
+  { dim: 2, keycap: "⌥2", label: "Who calls" },
+  { dim: 3, keycap: "⌥3", label: "How it runs" },
+  { dim: 4, keycap: "⌥4", label: "Where" },
 ];
 
 function focusLabel(f: Focus): string {
   if (f.type === "selection" && f.selection) {
-    return `第 ${f.selection.startLine}–${f.selection.endLine} 行`;
+    return `Lines ${f.selection.startLine}–${f.selection.endLine}`;
   }
   return f.ref.split("/").pop()?.split("#").pop() ?? f.ref;
 }
@@ -35,7 +35,7 @@ export function FocusBar() {
         {current ? (
           <span className="truncate text-body-sm text-text">{focusLabel(current)}</span>
         ) : (
-          <span className="text-caption text-text-tertiary">未选中对象</span>
+          <span className="text-caption text-text-tertiary">No selection</span>
         )}
         {provenance && (
           <span className="shrink-0 rounded-xs border border-border px-1.5 font-pixel text-pixel-label uppercase text-text-tertiary">

@@ -14,7 +14,7 @@ let client: Anthropic | null = null;
 function getClient(): Anthropic {
   if (!client) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY 未配置");
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
     client = new Anthropic({ apiKey });
   }
   return client;
@@ -101,7 +101,7 @@ export const anthropicProvider: LLMProvider = {
   },
 
   async embed(): Promise<number[][]> {
-    throw new Error("Anthropic 暂不提供 embedding，请用 openai provider");
+    throw new Error("Anthropic has no embedding; use the openai provider");
   },
 
   estimateCost(u, model) {

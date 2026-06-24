@@ -129,16 +129,16 @@ export async function pregenProject(projectId: string): Promise<PregenResult> {
   const overviewLLM = await runTaskSafe("module_arch", [
     {
       role: "system",
-      content: "你是资深架构讲解者。用 2-3 句中文概述这个项目的整体结构，面向非技术读者。",
+      content: "You are a senior architect. Summarize this project's overall structure in 2-3 English sentences for a non-technical reader.",
     },
     {
       role: "user",
-      content: `模块：${moduleNames.join(", ")}。文件数：${files.length}。模块依赖：${[...deps.entries()].map(([a, m]) => `${a}→${[...m.keys()].join("/")}`).join("; ") || "无"}。`,
+      content: `Modules: ${moduleNames.join(", ")}. Files: ${files.length}. Module deps: ${[...deps.entries()].map(([a, m]) => `${a}→${[...m.keys()].join("/")}`).join("; ") || "none"}.`,
     },
   ]);
   const overview =
     overviewLLM ??
-    `项目含 ${moduleNames.length} 个模块（${moduleNames.join("、")}），共 ${files.length} 个文件。`;
+    `Project has ${moduleNames.length} module(s) (${moduleNames.join(", ")}), ${files.length} files total.`;
 
   // 写 Module
   for (const [name, mf] of moduleFiles) {
@@ -153,7 +153,7 @@ export async function pregenProject(projectId: string): Promise<PregenResult> {
         projectId,
         name,
         pathScope: name === "(root)" ? "" : name,
-        responsibility: `包含 ${mf.length} 个文件`,
+        responsibility: `Contains ${mf.length} file(s)`,
         isEntry,
         dependsOn,
         fileIds: mf.map((f) => f.id),
@@ -168,7 +168,7 @@ export async function pregenProject(projectId: string): Promise<PregenResult> {
             sourceRef: name,
             targetRef: to,
             relationType: "depends",
-            nlExplanation: `${name} 调用 ${to}（${count} 处）`,
+            nlExplanation: `${name} calls ${to} (${count}×)`,
           },
         });
       }

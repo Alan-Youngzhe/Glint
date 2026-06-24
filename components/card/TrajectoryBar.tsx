@@ -9,7 +9,7 @@ import type { Focus } from "@/types/contract";
 
 function shortLabel(focus: Focus): string {
   if (focus.type === "selection" && focus.selection) {
-    return `第 ${focus.selection.startLine}–${focus.selection.endLine} 行`;
+    return `Lines ${focus.selection.startLine}–${focus.selection.endLine}`;
   }
   const tail = focus.ref.split("/").pop() ?? focus.ref;
   return tail.length > 22 ? tail.slice(0, 22) + "…" : tail;
@@ -36,10 +36,13 @@ export function TrajectoryBar() {
       <span className="shrink-0 font-pixel text-pixel-label uppercase tracking-wide text-text-tertiary">
         Trajectory
       </span>
+      <span className="hidden shrink-0 text-caption text-text-tertiary lg:inline">
+        Drill path · click to jump
+      </span>
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {!items.length && (
           <span className="text-caption text-text-tertiary">
-            选中对象按 ⌥1 留痕
+            Press ⌥1 on a selection to leave a trail
           </span>
         )}
         {items.map((it, i) => (

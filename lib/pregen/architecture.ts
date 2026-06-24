@@ -55,7 +55,7 @@ export async function getArchitecture(
   const totalLoc = roots.reduce((s, r) => s + r.loc, 0);
   const root: TreemapNode = {
     id: "root",
-    name: project?.name ?? "项目",
+    name: project?.name ?? "Project",
     kind: "dir",
     loc: totalLoc,
     children: roots,
@@ -72,11 +72,11 @@ export async function getArchitecture(
     root,
     techStack,
     overview: {
-      summary: analysis?.architectureOverview ?? "（尚未预理解）",
+      summary: analysis?.architectureOverview ?? "(not analyzed yet)",
       entryPoints,
       readingGuide: entryPoints.length
-        ? [`从入口 ${entryPoints[0]} 开始读`, "再看各顶层目录的职责", "点区块下钻看更细的文件"]
-        : ["点区块下钻查看各部分规模与文件"],
+        ? [`Start from the entry ${entryPoints[0]}`, "Then each top-level dir's role", "Click a block to drill into files"]
+        : ["Click a block to see each part's size and files"],
     },
   };
 }

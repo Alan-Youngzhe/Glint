@@ -85,8 +85,8 @@ export async function detectTechStack(projectId: string): Promise<number> {
       kind: "language",
       name: LANG_NAME[lang],
       slug: lang,
-      role: `${files.filter((f) => f.lang === lang).length} 个文件`,
-      detectedFrom: ["扩展名"],
+      role: `${files.filter((f) => f.lang === lang).length} files`,
+      detectedFrom: ["extension"],
       usageRefs: refs.map((at) => ({ at })),
     });
   }
@@ -170,9 +170,9 @@ export async function getTechLiteracy(slug: string): Promise<TechLiteracy> {
     {
       role: "system",
       content:
-        "你是技术百科。只输出 JSON：{\"what\":\"是什么\",\"purpose\":\"用途\",\"ecosystemPosition\":\"生态位置\"}，每项一句话中文。",
+        'You are a tech encyclopedia. Output JSON only: {"what":"what it is","purpose":"purpose","ecosystemPosition":"ecosystem position"}, one English sentence each.',
     },
-    { role: "user", content: `技术：${slug}` },
+    { role: "user", content: `Tech: ${slug}` },
   ]);
 
   let parsed: { what?: string; purpose?: string; ecosystemPosition?: string } = {};
@@ -187,7 +187,7 @@ export async function getTechLiteracy(slug: string): Promise<TechLiteracy> {
   const literacy: TechLiteracy = {
     slug,
     name: slug,
-    what: parsed.what ?? "（待生成：配置模型 Key 后自动补全）",
+    what: parsed.what ?? "(pending: set a model key to auto-fill)",
     purpose: parsed.purpose ?? "",
     ecosystemPosition: parsed.ecosystemPosition ?? "",
   };

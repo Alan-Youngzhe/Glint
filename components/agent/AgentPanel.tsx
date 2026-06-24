@@ -28,13 +28,13 @@ export function AgentPanel() {
       <div className="min-h-0 flex-1 space-y-3 overflow-auto px-3 py-2">
         {!messages.length && (
           <p className="text-caption text-text-tertiary">
-            问我关于这个项目的任何事，我会读结构/模块/技术栈来回答，并能帮你打开对应面板。
+            Ask me anything about this project — I read the structure, modules and tech stack to answer, and can open the right panel for you.
           </p>
         )}
         {messages.map((m) => (
           <div key={m.id} className={m.role === "user" ? "text-text" : "text-text-secondary"}>
             <div className="mb-0.5 font-pixel text-pixel-label uppercase text-text-tertiary">
-              {m.role === "user" ? "你" : "Glint"}
+              {m.role === "user" ? "You" : "Glint"}
             </div>
             <p className="whitespace-pre-wrap text-body-sm">
               {m.content}
@@ -77,7 +77,7 @@ export function AgentPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder="问点什么…"
+          placeholder="Ask anything…"
           className="h-8 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-body-sm text-text outline-none placeholder:text-text-tertiary focus-visible:border-accent"
         />
         <button
@@ -85,7 +85,7 @@ export function AgentPanel() {
           onClick={submit}
           disabled={busy}
           className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface-elevated text-text-secondary hover:bg-surface-hover hover:text-text disabled:opacity-50"
-          aria-label="发送"
+          aria-label="Send"
         >
           <Send size={15} />
         </button>

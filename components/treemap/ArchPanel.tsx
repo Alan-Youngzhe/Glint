@@ -9,28 +9,28 @@ import { cn } from "@/lib/utils";
 
 /** 目录名 → 角色标签（确定性启发式，无 key 也可用；与设计稿 HTTP/业务/模型… 对齐）。 */
 const DIR_ROLE: Record<string, string> = {
-  app: "入口",
+  app: "Entry",
   routes: "HTTP",
   route: "HTTP",
-  api: "接口",
-  services: "业务",
-  service: "业务",
-  controllers: "控制",
-  db: "模型",
-  models: "模型",
-  model: "模型",
-  middleware: "会话",
-  auth: "鉴权",
-  utils: "工具",
-  util: "工具",
-  lib: "工具",
-  helpers: "工具",
+  api: "API",
+  services: "Logic",
+  service: "Logic",
+  controllers: "Control",
+  db: "Model",
+  models: "Model",
+  model: "Model",
+  middleware: "Session",
+  auth: "Auth",
+  utils: "Utils",
+  util: "Utils",
+  lib: "Lib",
+  helpers: "Utils",
   components: "UI",
   ui: "UI",
-  store: "状态",
-  stores: "状态",
-  hooks: "钩子",
-  config: "配置",
+  store: "State",
+  stores: "State",
+  hooks: "Hooks",
+  config: "Config",
 };
 function roleOf(name: string): string {
   return DIR_ROLE[name.toLowerCase()] ?? name;
@@ -77,8 +77,8 @@ export function ArchPanel() {
   }, [projectId]);
 
   if (!projectId)
-    return <Shell hint="先选择一个项目" />;
-  if (!data) return <Shell hint="加载中…" />;
+    return <Shell hint="Select a project first" />;
+  if (!data) return <Shell hint="Loading…" />;
 
   const { level, loose } = moduleLevel(data.root);
   const dirCols = (level.children ?? []).filter((c) => c.kind !== "file");
@@ -88,15 +88,15 @@ export function ArchPanel() {
   ];
   const columns = [
     ...dirCols.map((d) => ({ name: d.name, role: roleOf(d.name), items: files(d) })),
-    ...(looseFiles.length ? [{ name: "(根)", role: "", items: looseFiles }] : []),
+    ...(looseFiles.length ? [{ name: "(root)", role: "", items: looseFiles }] : []),
   ];
 
   return (
     <div className="flex h-full flex-col bg-surface">
       <div className="shrink-0 px-3 pt-2">
-        <div className="text-h4 font-semibold text-text">架构鸟瞰 · 项目版图</div>
+        <div className="text-h4 font-semibold text-text">Architecture · Project map</div>
         <div className="text-caption text-text-tertiary">
-          分几块、各部分多大 — 点区块下钻看角色
+          How it splits, how big each part is — click a block to drill in
         </div>
         {/* 技术栈图例 */}
         {data.techStack.length > 0 && (
@@ -183,7 +183,7 @@ function Block({
 function Shell({ hint }: { hint: string }) {
   return (
     <div className="flex h-full flex-col bg-surface">
-      <div className="shrink-0 px-3 pt-2 text-h4 font-semibold text-text">架构鸟瞰 · 项目版图</div>
+      <div className="shrink-0 px-3 pt-2 text-h4 font-semibold text-text">Architecture · Project map</div>
       <p className="flex flex-1 items-center justify-center text-caption text-text-tertiary">{hint}</p>
     </div>
   );

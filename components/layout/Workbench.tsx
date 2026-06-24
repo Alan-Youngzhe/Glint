@@ -18,13 +18,13 @@ const DockShell = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-full items-center justify-center text-body-sm text-text-tertiary">
-        加载布局…
+        Loading layout…
       </div>
     ),
   },
 );
 
-const MENUS = ["文件", "编辑", "视图", "运行"];
+const MENUS = ["File", "Edit", "View", "Run"];
 
 /** TopBar 右侧维度键帽指示（当前维度电蓝，DS §15.7）。 */
 function DimKeycaps() {
@@ -92,7 +92,7 @@ export function Workbench() {
 
         <div className="ml-auto flex items-center gap-3">
           <span className="hidden text-caption text-text-tertiary xl:inline">
-            选中对象，按一个键看懂它
+            Select anything, press one key to understand it
           </span>
           <DimKeycaps />
           <ThemeToggle theme={theme} onToggle={toggle} />

@@ -76,7 +76,7 @@ export function ProjectBar() {
         className="h-7 max-w-[180px] rounded-md border border-border bg-surface-elevated px-2 text-body-sm text-text outline-none focus-visible:border-accent"
       >
         <option value="" disabled>
-          {projects.length ? "选择项目…" : "暂无项目"}
+          {projects.length ? "Select project…" : "No projects"}
         </option>
         {projects.map((p) => (
           <option key={p.id} value={p.id}>
@@ -96,7 +96,7 @@ export function ProjectBar() {
         ) : (
           <FolderUp size={14} />
         )}
-        导入项目
+        Import
       </button>
       <input
         ref={inputRef}

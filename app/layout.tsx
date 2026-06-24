@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 
 export const metadata: Metadata = {
   title: "Glint",
-  description: "面向产品角色的代码理解 / 学习工具",
+  description: "Code understanding & learning tool for product-minded people",
 };
 
 // 无闪烁主题引导：渲染前读取 localStorage，缺省暗色。

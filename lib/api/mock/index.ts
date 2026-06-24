@@ -29,7 +29,7 @@ export const mockApi: GlintApi = {
   async file(_projectId: string, path: string): Promise<FileContent> {
     await delay();
     return (
-      fileContents[path] ?? { content: `// ${path}\n// (mock: 无内容)`, lang: "text" }
+      fileContents[path] ?? { content: `// ${path}\n// (mock: no content)`, lang: "text" }
     );
   },
 
@@ -44,7 +44,7 @@ export const mockApi: GlintApi = {
       yield { done: res as unknown as CardPayload };
       return;
     }
-    const text = res.summary ?? res.explanation?.role ?? "（mock 解释）";
+    const text = res.summary ?? res.explanation?.role ?? "(mock explanation)";
     for (const ch of text) {
       await delay(12);
       yield { delta: ch };
@@ -69,7 +69,7 @@ export const mockApi: GlintApi = {
       return {
         slug,
         name: slug,
-        what: "（mock：暂无认知）",
+        what: "(mock: no info)",
         purpose: "",
         ecosystemPosition: "",
       };
@@ -78,14 +78,14 @@ export const mockApi: GlintApi = {
   },
 
   async *agent(req) {
-    const reply = `（mock Agent）已收到："${req.message}"。真实编排在三期接通。`;
+    const reply = `(mock Agent) received: "${req.message}". Real orchestration is wired in M3.`;
     for (const ch of reply) {
       await delay(10);
       yield { type: "token" as const, delta: ch };
     }
     yield {
       type: "suggestion" as const,
-      suggestions: [{ text: "看看项目架构", action: { kind: "open_panel", panel: "arch" } }],
+      suggestions: [{ text: "See the project architecture", action: { kind: "open_panel", panel: "arch" } }],
     };
     yield { type: "done" as const, messageId: "mock" };
   },
@@ -98,8 +98,8 @@ export const mockApi: GlintApi = {
   async weakPoints(_projectId) {
     await delay();
     return [
-      { slug: "async", name: "异步", askCount: 5, trend: "up" as const, mastery: 0.4 },
-      { slug: "guard-clause", name: "守卫语句", askCount: 2, trend: "flat" as const, mastery: 0.7 },
+      { slug: "async", name: "async", askCount: 5, trend: "up" as const, mastery: 0.4 },
+      { slug: "guard-clause", name: "guard clause", askCount: 2, trend: "flat" as const, mastery: 0.7 },
     ];
   },
 

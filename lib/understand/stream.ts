@@ -33,8 +33,8 @@ async function sliceSelection(req: UnderstandRequest): Promise<{
     /* ignore */
   }
   const range = focus.selection
-    ? `${focus.selection.startLine}-${focus.selection.endLine} 行`
-    : "全文";
+    ? `lines ${focus.selection.startLine}-${focus.selection.endLine}`
+    : "whole file";
   return { lang: file?.lang ?? "text", code, range };
 }
 
@@ -44,17 +44,17 @@ async function buildSelectionCard(req: UnderstandRequest): Promise<CardPayload> 
 
   const explanation: CodeExplanation = {
     language: lang,
-    positionInContext: `选中 ${range}`,
-    role: "（实时解释需配置模型 Key 后生成）",
+    positionInContext: `Selected ${range}`,
+    role: "(realtime explanation needs a model key)",
   };
 
   const text = await runTaskSafe("explain", [
     {
       role: "system",
       content:
-        '你面向非技术读者解释代码。只输出 JSON：{"role":"这段在做什么(一句话)","positionInContext":"它在上下文中的位置","syntax":["用到的语法点"]}。中文。',
+        'Explain code to a non-technical reader. Output JSON only: {"role":"what this does (one sentence)","positionInContext":"where it sits in context","syntax":["syntax points used"]}. In English.',
     },
-    { role: "user", content: `语言：${lang}\n代码：\n${code}` },
+    { role: "user", content: `Language: ${lang}\nCode:\n${code}` },
   ]);
   if (text) {
     try {
@@ -70,7 +70,7 @@ async function buildSelectionCard(req: UnderstandRequest): Promise<CardPayload> 
   return {
     kind: "card",
     focus: req.focus,
-    title: `选中 ${range}`,
+    title: `Selected ${range}`,
     source: "realtime",
     canPin: true,
     explanation,

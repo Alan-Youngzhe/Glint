@@ -53,7 +53,7 @@ export const useAgent = create<AgentState>((set, get) => ({
         else if (ev.type === "done") patch((m) => ({ ...m, streaming: false }));
       }
     } catch {
-      patch((m) => ({ ...m, content: m.content + "\n[连接中断]", streaming: false }));
+      patch((m) => ({ ...m, content: m.content + "\n[connection lost]", streaming: false }));
     } finally {
       set({ busy: false });
     }

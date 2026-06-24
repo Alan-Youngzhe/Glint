@@ -13,12 +13,12 @@ import { cn } from "@/lib/utils";
 
 /** 最左竖向图标栏（DS §15.7）。当前为视觉骨架，点击高亮；面板联动后续接 store。 */
 const ITEMS = [
-  { key: "explorer", icon: FolderTree, label: "资源管理器" },
-  { key: "search", icon: Search, label: "搜索" },
-  { key: "calls", icon: GitBranch, label: "调用" },
-  { key: "tech", icon: Boxes, label: "技术栈" },
+  { key: "explorer", icon: FolderTree, label: "Explorer" },
+  { key: "search", icon: Search, label: "Search" },
+  { key: "calls", icon: GitBranch, label: "Calls" },
+  { key: "tech", icon: Boxes, label: "Tech stack" },
   { key: "agent", icon: MessageSquare, label: "Agent" },
-  { key: "growth", icon: TrendingUp, label: "成长" },
+  { key: "growth", icon: TrendingUp, label: "Growth" },
 ];
 
 export function EdgeBar({
@@ -56,8 +56,8 @@ export function EdgeBar({
       })}
       <button
         type="button"
-        title="设置"
-        aria-label="设置"
+        title="Settings"
+        aria-label="Settings"
         className="mt-auto flex h-9 w-9 items-center justify-center rounded-md text-text-tertiary transition-colors duration-1 ease-out hover:bg-surface-hover hover:text-text-secondary"
       >
         <Settings size={18} strokeWidth={1.6} />

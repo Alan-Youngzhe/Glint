@@ -21,25 +21,25 @@ export async function* agentLoop(
   // RAG：按问题跨文件检索相关代码（V4 §5）
   const rag = await retrieve(projectId, message);
   const ragCtx = rag.snippets.length
-    ? `\n相关代码：\n${rag.snippets.map((s) => `- ${s.at} ${s.ref}`).join("\n")}`
+    ? `\nRelevant code:\n${rag.snippets.map((s) => `- ${s.at} ${s.ref}`).join("\n")}`
     : "";
 
   const ctx =
-    `架构概述：${analysis?.architectureOverview ?? "（无）"}。\n` +
-    `模块：${modules.map((m) => m.name).join("、") || "（无）"}。\n` +
-    `技术栈：${tech.map((t) => t.name).join("、") || "（无）"}。${ragCtx}`;
+    `Architecture: ${analysis?.architectureOverview ?? "(none)"}.\n` +
+    `Modules: ${modules.map((m) => m.name).join(", ") || "(none)"}.\n` +
+    `Tech stack: ${tech.map((t) => t.name).join(", ") || "(none)"}.${ragCtx}`;
 
   const llm = await runTaskSafe("explain", [
     {
       role: "system",
-      content: "你是代码库讲解 Agent，面向非技术读者，用中文简洁回答，只依据给定上下文。",
+      content: "You are a codebase explainer agent for non-technical readers. Answer concisely in English, using only the given context.",
     },
-    { role: "user", content: `${ctx}\n\n用户问题：${message}` },
+    { role: "user", content: `${ctx}\n\nUser question: ${message}` },
   ]);
 
   const answer =
     llm ??
-    `（未配置模型 Key，先给确定性概览）\n${ctx}\n\n填好 ANTHROPIC_API_KEY 后我能针对「${message}」展开回答。`;
+    `(No model key — deterministic overview)\n${ctx}\n\nSet ANTHROPIC_API_KEY and I can answer "${message}" in depth.`;
 
   for (const ch of answer) {
     await new Promise((r) => setTimeout(r, 6));
@@ -55,11 +55,11 @@ export async function* agentLoop(
 
   // 建议（每条带 action，驱动界面）
   const suggestions: Suggestion[] = [
-    { text: "看看项目架构鸟瞰", action: { kind: "open_panel", panel: "arch" } },
+    { text: "See the project architecture", action: { kind: "open_panel", panel: "arch" } },
   ];
   if (modules[0]) {
     suggestions.push({
-      text: `深入「${modules[0].name}」模块`,
+      text: `Dive into the ${modules[0].name} module`,
       action: { kind: "trigger_dimension", focus: { type: "module", ref: modules[0].name }, dimension: 1 },
     });
   }

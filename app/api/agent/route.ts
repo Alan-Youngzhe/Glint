@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       } catch (e) {
         controller.enqueue(
           encoder.encode(
-            `data: ${JSON.stringify({ type: "token", delta: `\n[错误] ${e instanceof Error ? e.message : String(e)}` })}\n\n`,
+            `data: ${JSON.stringify({ type: "token", delta: `\n[error] ${e instanceof Error ? e.message : String(e)}` })}\n\n`,
           ),
         );
       } finally {

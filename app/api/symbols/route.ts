@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const projectId = sp.get("projectId");
   const file = sp.get("file");
   if (!projectId) {
-    return NextResponse.json({ error: "缺少 projectId" }, { status: 400 });
+    return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
   }
 
   let fileId: string | undefined;

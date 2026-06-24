@@ -17,7 +17,7 @@ export async function GET(
   if (!files.length) {
     const exists = await prisma.project.findUnique({ where: { id } });
     if (!exists) {
-      return NextResponse.json({ error: "项目不存在" }, { status: 404 });
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
   }
   const tree = buildTree(files.map((f) => f.relPath));

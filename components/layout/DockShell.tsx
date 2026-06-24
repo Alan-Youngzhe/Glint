@@ -30,13 +30,13 @@ function onReady(event: DockviewReadyEvent) {
   const explorer = api.addPanel({
     id: "explorer",
     component: "filetree",
-    title: "资源管理器",
+    title: "Explorer",
   });
 
   const code = api.addPanel({
     id: "code",
     component: "code",
-    title: "代码",
+    title: "Code",
     position: { referencePanel: explorer.id, direction: "right" },
   });
 
@@ -50,7 +50,7 @@ function onReady(event: DockviewReadyEvent) {
   const techstack = api.addPanel({
     id: "techstack",
     component: "techstack",
-    title: "技术栈",
+    title: "Tech stack",
     position: { referencePanel: insight.id, direction: "below" },
   });
 
@@ -64,7 +64,7 @@ function onReady(event: DockviewReadyEvent) {
   api.addPanel({
     id: "weak",
     component: "weak",
-    title: "成长",
+    title: "Growth",
     position: { referencePanel: techstack.id, direction: "within" },
   });
 
