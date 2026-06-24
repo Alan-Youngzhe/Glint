@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const DIMS: { dim: Dimension; keycap: string; label: string }[] = [
   { dim: 1, keycap: "⌥1", label: "Why" },
   { dim: 2, keycap: "⌥2", label: "Who calls" },
-  { dim: 3, keycap: "⌥3", label: "How it runs" },
+  { dim: 3, keycap: "⌥3", label: "How" },
   { dim: 4, keycap: "⌥4", label: "Where" },
 ];
 
