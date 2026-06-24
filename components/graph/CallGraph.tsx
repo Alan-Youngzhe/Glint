@@ -1,11 +1,13 @@
 "use client";
 
 import "reactflow/dist/style.css";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import ReactFlow, {
   Background,
   Handle,
   Position,
+  ReactFlowProvider,
+  useReactFlow,
   type Edge,
   type Node,
   type NodeProps,
@@ -44,7 +46,7 @@ function GlintNode({ data }: NodeProps<NodeData>) {
 
 const nodeTypes = { glint: GlintNode };
 
-export function CallGraph({ payload }: { payload: CallGraphPayload }) {
+function CallGraphInner({ payload }: { payload: CallGraphPayload }) {
   const setFocus = useFocus((s) => s.setFocus);
 
   const { nodes, edges } = useMemo(() => {
@@ -68,24 +70,60 @@ export function CallGraph({ payload }: { payload: CallGraphPayload }) {
     return { nodes, edges };
   }, [payload]);
 
+  const { fitView } = useReactFlow();
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // 数据变化时 fit（DS §9.14）。
+  useEffect(() => {
+    const id = window.setTimeout(() => fitView({ padding: 0.2, duration: 200 }), 50);
+    return () => clearTimeout(id);
+  }, [payload, fitView]);
+
+  // dock 面板尺寸延迟成形：容器每次 resize 都重新 fit-to-bounds（修复初次渲染时容器过小被 minZoom 钳住）。
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => fitView({ padding: 0.2, duration: 0 }));
+    });
+    ro.observe(el);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [fitView]);
+
   function onNodeClick(_: unknown, node: Node) {
     const focus: Focus = { type: "function", ref: node.id };
     setFocus(focus);
-    void dispatchDimension(focus, 2); // 点节点 = 钻取重排（V3 §6.7）
+    void dispatchDimension(focus, 2); // node click = drill + re-center (V3 §6.7)
   }
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      onNodeClick={onNodeClick}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-      proOptions={{ hideAttribution: true }}
-      minZoom={0.2}
-    >
-      <Background color="var(--border)" gap={20} />
-    </ReactFlow>
+    <div ref={wrapRef} className="h-full w-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodeClick={onNodeClick}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        proOptions={{ hideAttribution: true }}
+        minZoom={0.1}
+        maxZoom={1.5}
+      >
+        <Background color="var(--border)" gap={20} />
+      </ReactFlow>
+    </div>
+  );
+}
+
+export function CallGraph({ payload }: { payload: CallGraphPayload }) {
+  return (
+    <ReactFlowProvider>
+      <CallGraphInner payload={payload} />
+    </ReactFlowProvider>
   );
 }
