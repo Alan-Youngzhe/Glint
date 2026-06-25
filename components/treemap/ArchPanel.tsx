@@ -6,7 +6,10 @@ import type { ArchitecturePayload, ArchModule, ArchRole, TreemapNode } from "@/t
 import { useWorkspace } from "@/stores/workspace";
 import { useFocus } from "@/stores/focus";
 import { dottedAddress, nodeAtPath, shouldExpand } from "@/lib/pregen/expand-rules";
+import { ArchDiagram } from "@/components/structure/ArchDiagram";
 import { cn } from "@/lib/utils";
+
+type ArchView = "diagram" | "layers";
 
 /** 角色 → 人话层（产品视角能读懂，按"离用户多近"从上到下排）。 */
 const TIERS: { role: ArchRole; label: string; blurb: string }[] = [
@@ -23,6 +26,7 @@ export function ArchPanel() {
   const setFocus = useFocus((s) => s.setFocus);
   const [data, setData] = useState<ArchitecturePayload | null>(null);
   const [path, setPath] = useState<string[]>([]); // 下钻路径（各级 name）
+  const [view, setView] = useState<ArchView>("diagram");
 
   useEffect(() => {
     setPath([]);
@@ -48,14 +52,38 @@ export function ArchPanel() {
   return (
     <div className="flex h-full flex-col bg-surface">
       <div className="shrink-0 px-3 pt-2">
-        <div className="text-h4 font-semibold text-text">Architecture · Project map</div>
-        <div className="text-caption text-text-tertiary">
-          The major parts, what each does, and how they connect
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-h4 font-semibold text-text">Architecture · Project map</div>
+            <div className="text-caption text-text-tertiary">
+              The major parts, what each does, and how they connect
+            </div>
+          </div>
+          {/* 视图切换：图 / 分层列表 */}
+          <div className="flex shrink-0 rounded-md border border-border p-0.5">
+            {(["diagram", "layers"] as ArchView[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={cn(
+                  "rounded px-2 py-0.5 text-caption capitalize transition-colors duration-1",
+                  view === v ? "bg-accent text-accent-fg" : "text-text-secondary hover:text-text",
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto px-3 pb-3">
-        {path.length === 0 ? (
+        {view === "diagram" ? (
+          <div className="mt-2">
+            <ArchDiagram modules={data.modules} onOpen={(p) => openFile(p)} />
+          </div>
+        ) : path.length === 0 ? (
           <Overview data={data} onDrill={(name) => setPath([name])} onOpen={openFile} />
         ) : (
           <DrillView
