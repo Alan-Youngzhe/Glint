@@ -60,6 +60,14 @@ export function InsightPanel() {
           (call && call.nodes.length ? (
             <div className="flex h-full flex-col">
               <GraphControls payload={call} />
+              {call.impact && call.impact.functions > 0 && (
+                <div className="flex shrink-0 items-center gap-1.5 border-b border-border bg-bg-subtle px-2 py-1 text-caption text-text-secondary">
+                  <span className="font-pixel text-pixel-label uppercase text-warning">Impact</span>
+                  changing this affects {call.impact.functions} function
+                  {call.impact.functions === 1 ? "" : "s"} in {call.impact.files} file
+                  {call.impact.files === 1 ? "" : "s"}
+                </div>
+              )}
               <div className="min-h-0 flex-1">
                 <CallGraph payload={call} />
               </div>

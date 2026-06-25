@@ -112,6 +112,35 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
   });
   const byId = new Map(syms.map((s) => [s.id, s]));
 
+  // 影响集（借鉴 graphify affected.py）：沿"被谁调用"反向 BFS（无界），
+  // = 改焦点会波及的全部传递调用者。用于"改这个，什么会受影响"。
+  const callersOf = new Map<string, string[]>();
+  for (const e of allEdges) {
+    const arr = callersOf.get(e.calleeSymbolId) ?? [];
+    arr.push(e.callerSymbolId);
+    callersOf.set(e.calleeSymbolId, arr);
+  }
+  const impacted = new Set<string>();
+  let iq = [...focusSet];
+  while (iq.length) {
+    const next: string[] = [];
+    for (const id of iq)
+      for (const c of callersOf.get(id) ?? []) {
+        if (focusSet.has(c) || impacted.has(c)) continue;
+        impacted.add(c);
+        next.push(c);
+      }
+    iq = next;
+  }
+  let impact: CallGraphPayload["impact"];
+  if (impacted.size) {
+    const impactedSyms = await prisma.symbol.findMany({
+      where: { id: { in: [...impacted] } },
+      select: { fileId: true },
+    });
+    impact = { functions: impacted.size, files: new Set(impactedSyms.map((s) => s.fileId)).size };
+  }
+
   if (level === "module") {
     // symbol → 模块（其文件首段目录）
     const fileIds = [...new Set(syms.map((s) => s.fileId))];
@@ -159,7 +188,7 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
       nl: `${e.from} → ${e.to}`,
       confidence: e.confidence,
     }));
-    return { kind: "callgraph", focus, nodes, edges, source: "call_edges (module)", view };
+    return { kind: "callgraph", focus, nodes, edges, source: "call_edges (module)", view, impact };
   }
 
   const nodes: GraphNode[] = syms.map((s) => ({
@@ -183,6 +212,7 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
     edges: gEdges,
     source: "symbol_refs+call_edges",
     view,
+    impact,
   };
 }
 

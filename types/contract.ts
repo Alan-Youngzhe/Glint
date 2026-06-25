@@ -103,6 +103,7 @@ export interface CallGraphPayload {
   edges: GraphEdge[];
   source: string;
   view?: GraphView; // 应用的深度/层级，供 UI 回显
+  impact?: { functions: number; files: number }; // 改焦点会波及的传递调用者规模
 }
 
 export interface ExecStep {

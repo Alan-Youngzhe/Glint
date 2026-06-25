@@ -156,6 +156,27 @@ async function main() {
   ok("⌥2 焦点 requireUser 居中", cg.nodes.some((n) => n.label === "requireUser" && n.isFocus));
   ok("⌥2 含被调用者 getSession", cg.nodes.some((n) => n.label === "getSession"));
   ok("⌥2 含调用者 getProfile", cg.nodes.some((n) => n.label === "getProfile"));
+  // 影响分析（借鉴 #8 affected.py）：改 requireUser 至少波及 getProfile
+  ok("⌥2 影响集 ≥1 函数", (cg.impact?.functions ?? 0) >= 1, `impact=${JSON.stringify(cg.impact)}`);
+
+  // C3 LOD：深度 N 跳 + 模块级折叠
+  const cgDepth = await postJSON("/api/understand", {
+    projectId: pid,
+    focus: { type: "function", ref: await symbolId(pid, "src/user.ts", "getProfile") },
+    dimension: 2,
+    graph: { depth: 2, level: "function" },
+  });
+  ok(
+    "⌥2 深度2 从 getProfile 触及 getSession（2 跳）",
+    cgDepth.nodes.some((n) => n.label === "getSession"),
+  );
+  const cgMod = await postJSON("/api/understand", {
+    projectId: pid,
+    focus: { type: "function", ref: reqUserId },
+    dimension: 2,
+    graph: { depth: 1, level: "module" },
+  });
+  ok("⌥2 模块级折叠产出 module 节点", cgMod.nodes.some((n) => n.kind === "module"));
 
   const card = await postJSON("/api/understand", {
     projectId: pid,
