@@ -81,7 +81,7 @@ export function ArchPanel() {
       <div className="min-h-0 flex-1 overflow-auto px-3 pb-3">
         {view === "diagram" ? (
           <div className="mt-2">
-            <ArchDiagram modules={data.modules} onOpen={(p) => openFile(p)} />
+            <ArchDiagram projectId={projectId} modules={data.modules} onOpen={(p) => openFile(p)} />
           </div>
         ) : path.length === 0 ? (
           <Overview data={data} onDrill={(name) => setPath([name])} onOpen={openFile} />
