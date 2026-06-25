@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { runTaskSafe } from "@/lib/ai";
+import { inferRole } from "@/lib/pregen/roles";
 
 /**
  * 预理解（V2 §5.2）：确定性骨架（结构/模块/关系/架构）+ LLM 可选补人话（无 key 降级）。
@@ -124,8 +125,34 @@ export async function pregenProject(projectId: string): Promise<PregenResult> {
     }
   }
 
-  // ── 架构概述（LLM 可选）──
+  // ── 角色 + 入口（供概述与 Module 写入复用）──
   const moduleNames = [...moduleFiles.keys()];
+  const roleByModule = new Map(
+    moduleNames.map((n) => [n, inferRole(n, (moduleFiles.get(n) ?? []).map((f) => f.relPath))]),
+  );
+  const isEntryModule = (name: string) =>
+    (moduleFiles.get(name) ?? []).some((f) => ENTRY_RE.test(f.relPath.split("/").pop() ?? ""));
+  const entryModules = moduleNames.filter(isEntryModule);
+
+  // 从入口顺着依赖 BFS 串成"主流向"：src → api → services → db
+  const flowChain = (start: string): string => {
+    const order: string[] = [];
+    const seen = new Set<string>();
+    let frontier = [start];
+    while (frontier.length) {
+      const next: string[] = [];
+      for (const m of frontier) {
+        if (seen.has(m)) continue;
+        seen.add(m);
+        order.push(m);
+        next.push(...[...(deps.get(m) ?? new Map()).keys()].sort());
+      }
+      frontier = next.filter((m) => !seen.has(m));
+    }
+    return order.join(" → ");
+  };
+
+  // ── 架构概述（LLM 可选；无 key 用带流向的确定性人话兜底）──
   const overviewLLM = await runTaskSafe("module_arch", [
     {
       role: "system",
@@ -136,9 +163,12 @@ export async function pregenProject(projectId: string): Promise<PregenResult> {
       content: `Modules: ${moduleNames.join(", ")}. Files: ${files.length}. Module deps: ${[...deps.entries()].map(([a, m]) => `${a}→${[...m.keys()].join("/")}`).join("; ") || "none"}.`,
     },
   ]);
-  const overview =
-    overviewLLM ??
-    `Project has ${moduleNames.length} module(s) (${moduleNames.join(", ")}), ${files.length} files total.`;
+  const entry = entryModules[0];
+  const chain = entry ? flowChain(entry) : "";
+  const fallbackParts = [`${files.length} files across ${moduleNames.length} parts`];
+  if (entry) fallbackParts.push(`starts at ${entry === "(root)" ? "the root files" : entry}`);
+  if (chain.includes(" → ")) fallbackParts.push(`main flow: ${chain}`);
+  const overview = overviewLLM ?? `${fallbackParts.join(". ")}.`;
 
   // 写 Module
   for (const [name, mf] of moduleFiles) {
@@ -154,6 +184,7 @@ export async function pregenProject(projectId: string): Promise<PregenResult> {
         name,
         pathScope: name === "(root)" ? "" : name,
         responsibility: `Contains ${mf.length} file(s)`,
+        businessRole: roleByModule.get(name) ?? "other",
         isEntry,
         dependsOn,
         fileIds: mf.map((f) => f.id),

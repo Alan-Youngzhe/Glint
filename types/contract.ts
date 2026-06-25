@@ -120,10 +120,26 @@ export interface TreemapNode {
   children?: TreemapNode[];
 }
 
+/** 模块在系统里扮演的角色（确定性推断，决定它落在哪一层）。 */
+export type ArchRole = "interface" | "logic" | "data" | "shared" | "other";
+
+/** 一个模块（顶层代码分区）+ 它的体量与依赖——架构地图的主单位。 */
+export interface ArchModule {
+  name: string;
+  pathScope: string; // 相对路径前缀（"(root)" 模块为空）
+  role: ArchRole;
+  loc: number;
+  fileCount: number;
+  isEntry: boolean; // 含入口文件（index/main/app）
+  uses: string[]; // 依赖的其他模块名（来自 call_edges 聚合）
+  topFile: string; // 模块内最大的文件，点击即打开
+}
+
 export interface ArchitecturePayload {
   kind: "architecture";
   focus: Focus;
   root: TreemapNode;
+  modules: ArchModule[];
   overview: { summary: string; entryPoints: string[]; readingGuide: string[] };
   techStack: string[];
 }

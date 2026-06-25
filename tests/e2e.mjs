@@ -153,6 +153,11 @@ async function main() {
   });
   ok("⌥4 架构 kind=architecture", arch.kind === "architecture");
   ok("⌥4 treemap 根有子节点", (arch.root?.children?.length ?? 0) > 0);
+  ok("⌥4 模块地图非空", (arch.modules?.length ?? 0) > 0, `modules=${arch.modules?.length}`);
+  ok(
+    "⌥4 模块带角色标签",
+    (arch.modules ?? []).every((m) => ["interface", "logic", "data", "shared", "other"].includes(m.role)),
+  );
 
   const exec = await postJSON("/api/understand", {
     projectId: pid,

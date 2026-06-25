@@ -1,18 +1,50 @@
 import type { ArchitecturePayload } from "@/types/contract";
 
-/** ⌥4 架构 Treemap + 概述（mock，直读）。 */
+/** ⌥4 架构地图 + 概述（mock，直读）。 */
 export const architectureFixture: ArchitecturePayload = {
   kind: "architecture",
   focus: { type: "folder", ref: "" },
   techStack: ["TypeScript", "Next.js", "Node"],
+  modules: [
+    {
+      name: "api",
+      pathScope: "api",
+      role: "interface",
+      loc: 24,
+      fileCount: 2,
+      isEntry: false,
+      uses: ["auth"],
+      topFile: "api/user.ts",
+    },
+    {
+      name: "auth",
+      pathScope: "auth",
+      role: "logic",
+      loc: 26,
+      fileCount: 2,
+      isEntry: false,
+      uses: [],
+      topFile: "auth/session.ts",
+    },
+    {
+      name: "(root)",
+      pathScope: "",
+      role: "other",
+      loc: 10,
+      fileCount: 1,
+      isEntry: true,
+      uses: ["api", "auth"],
+      topFile: "index.ts",
+    },
+  ],
   overview: {
     summary:
-      "一个最小的服务端示例：auth 负责会话与守卫，api 暴露受保护的业务端点，index 汇总路由。",
+      "A minimal server example: auth owns sessions and the login guard, api exposes the protected business endpoints, and index wires the routes together.",
     entryPoints: ["index.ts"],
     readingGuide: [
-      "先看 index.ts 了解暴露了哪些路由",
-      "再看 auth/guard.ts 理解统一的登录守卫",
-      "最后看 api/*.ts 各业务端点如何复用守卫",
+      "Start from index.ts to see which routes are exposed",
+      "Then auth/guard.ts for the shared login guard",
+      "Finally api/*.ts for how each endpoint reuses the guard",
     ],
   },
   root: {

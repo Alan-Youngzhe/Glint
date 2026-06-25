@@ -18,6 +18,22 @@ const SKIP_DIRS = new Set([
   "coverage",
   ".turbo",
   ".cache",
+  // 副本/工作树/归档：装的是整份代码的拷贝，会污染整个架构视图
+  "worktrees",
+  ".worktrees",
+  "archive",
+  "archives",
+  "backup",
+  "backups",
+  // 构建产物 / 运行时缓存 / 编辑器
+  "target",
+  "__pycache__",
+  ".venv",
+  "venv",
+  ".idea",
+  ".vscode",
+  "tmp",
+  "temp",
 ]);
 
 const SKIP_FILES = new Set([
@@ -62,7 +78,10 @@ function langOf(rel: string): string {
 
 function shouldSkip(rel: string): boolean {
   const segs = rel.split("/");
-  if (segs.some((s) => SKIP_DIRS.has(s))) return true;
+  const dirSegs = segs.slice(0, -1); // 路径中的目录段（不含文件名）
+  if (dirSegs.some((s) => SKIP_DIRS.has(s))) return true;
+  // 工具目录（.github / .changeset / .husky …）：对"看懂代码"是噪音
+  if (dirSegs.some((s) => s.startsWith(".") && s !== "..")) return true;
   const base = segs[segs.length - 1];
   if (SKIP_FILES.has(base)) return true;
   if (/\.(min\.(js|css)|map)$/i.test(base)) return true;

@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/db";
-import type { ArchitecturePayload, TreemapNode } from "@/types/contract";
+import type { ArchitecturePayload, ArchModule, ArchRole, TreemapNode } from "@/types/contract";
 
 const ENTRY_RE = /^(index|main|app)\.[a-z]+$/i;
 
-/** 由 StructureNode + ProjectAnalysis 组装 ⌥4 架构 Treemap（直读，第二次打开走库）。 */
+/** 由 StructureNode + Module + ProjectAnalysis 组装 ⌥4 架构地图（直读，第二次打开走库）。 */
 export async function getArchitecture(
   projectId: string,
 ): Promise<ArchitecturePayload> {
-  const [project, nodes, analysis] = await Promise.all([
+  const [project, nodes, analysis, moduleRows, files] = await Promise.all([
     prisma.project.findUnique({ where: { id: projectId }, select: { name: true } }),
     prisma.structureNode.findMany({
       where: { projectId },
@@ -17,6 +17,8 @@ export async function getArchitecture(
       where: { projectId },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.module.findMany({ where: { projectId } }),
+    prisma.file.findMany({ where: { projectId }, select: { id: true, relPath: true, loc: true } }),
   ]);
 
   // relPath → TreemapNode（relPath 理论非空，guard 以满足类型）
@@ -66,10 +68,32 @@ export async function getArchitecture(
     .map((n) => n.relPath);
   const techStack = (analysis?.techStack as string[] | null) ?? [];
 
+  // 模块地图：每个模块的体量（loc/文件数）、入口、依赖、可点开的代表文件
+  const fileById = new Map(files.map((f) => [f.id, f]));
+  const modules: ArchModule[] = moduleRows
+    .map((m): ArchModule => {
+      const ids = (m.fileIds as string[] | null) ?? [];
+      const mf = ids.map((id) => fileById.get(id)).filter((f): f is NonNullable<typeof f> => !!f);
+      const top = [...mf].sort((a, b) => b.loc - a.loc)[0];
+      return {
+        name: m.name,
+        pathScope: m.pathScope ?? "",
+        role: ((m.businessRole as ArchRole | null) ?? "other"),
+        loc: mf.reduce((s, f) => s + f.loc, 0),
+        fileCount: mf.length,
+        isEntry: m.isEntry,
+        uses: (m.dependsOn as string[] | null) ?? [],
+        topFile: top?.relPath ?? "",
+      };
+    })
+    .filter((m) => m.fileCount > 0)
+    .sort((a, b) => b.loc - a.loc);
+
   return {
     kind: "architecture",
     focus: { type: "folder", ref: "" },
     root,
+    modules,
     techStack,
     overview: {
       summary: analysis?.architectureOverview ?? "(not analyzed yet)",
