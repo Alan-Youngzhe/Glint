@@ -70,7 +70,12 @@ export async function dispatchDimension(focus: Focus, dim: Dimension) {
 
   useInsight.getState().setLoading(true);
   try {
-    const res = await api.understand({ projectId, focus, dimension: dim });
+    const res = await api.understand({
+      projectId,
+      focus,
+      dimension: dim,
+      ...(dim === 2 ? { graph: useInsight.getState().graphView } : {}),
+    });
     if (res.kind === "callgraph") useInsight.getState().setCall(res);
     else if (res.kind === "execpath") useInsight.getState().setFlow(res);
   } catch {

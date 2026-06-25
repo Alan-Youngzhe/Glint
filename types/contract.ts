@@ -32,10 +32,17 @@ export interface Focus {
 export type Dimension = 1 | 2 | 3 | 4;
 
 // ===== Request =====
+/** ⌥2 调用图视图选项：深度（N 跳）+ 层级（函数级 / 模块级折叠）。 */
+export interface GraphView {
+  depth: number; // 1–3 跳
+  level: "function" | "module";
+}
+
 export interface UnderstandRequest {
   projectId: string;
   focus: Focus;
   dimension: Dimension;
+  graph?: Partial<GraphView>; // 仅 ⌥2 用
 }
 
 // ===== ⌥1 卡片 =====
@@ -95,6 +102,7 @@ export interface CallGraphPayload {
   nodes: GraphNode[];
   edges: GraphEdge[];
   source: string;
+  view?: GraphView; // 应用的深度/层级，供 UI 回显
 }
 
 export interface ExecStep {

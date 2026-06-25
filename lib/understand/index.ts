@@ -59,32 +59,108 @@ async function focusSymbolIds(projectId: string, focus: Focus): Promise<string[]
   return [];
 }
 
-// ===== ⌥2 调用图（call_edges 确定性 + 连线 NL） =====
+// ===== ⌥2 调用图（call_edges 确定性 + 连线 NL；LOD 深度 + 模块折叠） =====
+const GRAPH_MAX_NODES = 60; // N 跳爆炸保护
+
+/** 顶层模块（文件 relPath 的首段）。 */
+function topModule(rel: string): string {
+  const i = rel.indexOf("/");
+  return i === -1 ? "(root)" : rel.slice(0, i);
+}
+
 async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
   const { projectId, focus } = req;
+  const depth = Math.max(1, Math.min(req.graph?.depth ?? 1, 3));
+  const level = req.graph?.level ?? "function";
   const focusSet = new Set(await focusSymbolIds(projectId, focus));
+  const view = { depth, level };
 
-  const edges = await prisma.callEdge.findMany({
-    where: {
-      projectId,
-      OR: [
-        { callerSymbolId: { in: [...focusSet] } },
-        { calleeSymbolId: { in: [...focusSet] } },
-      ],
-    },
-  });
-
-  const idSet = new Set<string>(focusSet);
-  edges.forEach((e) => {
-    idSet.add(e.callerSymbolId);
-    idSet.add(e.calleeSymbolId);
-  });
+  // 全量边 → 无向邻接，从焦点 BFS 取 N 跳
+  const allEdges = await prisma.callEdge.findMany({ where: { projectId } });
+  const adj = new Map<string, Set<string>>();
+  const link = (a: string, b: string) => {
+    let s = adj.get(a);
+    if (!s) adj.set(a, (s = new Set()));
+    s.add(b);
+  };
+  for (const e of allEdges) {
+    link(e.callerSymbolId, e.calleeSymbolId);
+    link(e.calleeSymbolId, e.callerSymbolId);
+  }
+  const visited = new Set<string>(focusSet);
+  let frontier = [...focusSet];
+  for (let d = 0; d < depth && visited.size < GRAPH_MAX_NODES; d++) {
+    const next: string[] = [];
+    for (const id of frontier) {
+      for (const nb of adj.get(id) ?? []) {
+        if (visited.has(nb)) continue;
+        visited.add(nb);
+        next.push(nb);
+        if (visited.size >= GRAPH_MAX_NODES) break;
+      }
+      if (visited.size >= GRAPH_MAX_NODES) break;
+    }
+    frontier = next;
+  }
+  const subEdges = allEdges.filter(
+    (e) => visited.has(e.callerSymbolId) && visited.has(e.calleeSymbolId),
+  );
 
   const syms = await prisma.symbol.findMany({
-    where: { id: { in: [...idSet] } },
-    select: { id: true, name: true, kind: true, qualifiedName: true },
+    where: { id: { in: [...visited] } },
+    select: { id: true, name: true, kind: true, fileId: true },
   });
   const byId = new Map(syms.map((s) => [s.id, s]));
+
+  if (level === "module") {
+    // symbol → 模块（其文件首段目录）
+    const fileIds = [...new Set(syms.map((s) => s.fileId))];
+    const files = await prisma.file.findMany({
+      where: { id: { in: fileIds } },
+      select: { id: true, relPath: true },
+    });
+    const moduleOfFile = new Map(files.map((f) => [f.id, topModule(f.relPath)]));
+    const moduleOf = (symId: string) => {
+      const s = byId.get(symId);
+      return s ? moduleOfFile.get(s.fileId) : undefined;
+    };
+    const focusModules = new Set([...focusSet].map(moduleOf).filter(Boolean) as string[]);
+
+    const modNames = new Set<string>();
+    for (const s of syms) {
+      const m = moduleOfFile.get(s.fileId);
+      if (m) modNames.add(m);
+    }
+    const nodes: GraphNode[] = [...modNames].map((m) => ({
+      id: m,
+      label: m === "(root)" ? "(root)" : m,
+      kind: "module",
+      isFocus: focusModules.has(m),
+    }));
+    // 跨模块边聚合（去自环，取最大 confidence）
+    const agg = new Map<string, { from: string; to: string; count: number; confidence: number }>();
+    for (const e of subEdges) {
+      const a = moduleOf(e.callerSymbolId);
+      const b = moduleOf(e.calleeSymbolId);
+      if (!a || !b || a === b) continue;
+      const k = `${a}|${b}`;
+      const cur = agg.get(k);
+      if (cur) {
+        cur.count += e.refCount;
+        cur.confidence = Math.max(cur.confidence, e.confidence);
+      } else {
+        agg.set(k, { from: a, to: b, count: e.refCount, confidence: e.confidence });
+      }
+    }
+    const edges: GraphEdge[] = [...agg.values()].map((e) => ({
+      from: e.from,
+      to: e.to,
+      relation: "calls" as const,
+      nl: `${e.from} → ${e.to}`,
+      confidence: e.confidence,
+    }));
+    return { kind: "callgraph", focus, nodes, edges, source: "call_edges (module)", view };
+  }
 
   const nodes: GraphNode[] = syms.map((s) => ({
     id: s.id,
@@ -92,16 +168,13 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
     kind: GKIND[s.kind] ?? "function",
     isFocus: focusSet.has(s.id),
   }));
-
-  const gEdges: GraphEdge[] = edges
-    .filter((e) => byId.has(e.callerSymbolId) && byId.has(e.calleeSymbolId))
-    .map((e) => ({
-      from: e.callerSymbolId,
-      to: e.calleeSymbolId,
-      relation: "calls" as const,
-      nl: `${byId.get(e.callerSymbolId)!.name} calls ${byId.get(e.calleeSymbolId)!.name}`,
-      confidence: e.confidence,
-    }));
+  const gEdges: GraphEdge[] = subEdges.map((e) => ({
+    from: e.callerSymbolId,
+    to: e.calleeSymbolId,
+    relation: "calls" as const,
+    nl: `${byId.get(e.callerSymbolId)!.name} calls ${byId.get(e.calleeSymbolId)!.name}`,
+    confidence: e.confidence,
+  }));
 
   return {
     kind: "callgraph",
@@ -109,6 +182,7 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
     nodes,
     edges: gEdges,
     source: "symbol_refs+call_edges",
+    view,
   };
 }
 

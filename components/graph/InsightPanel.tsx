@@ -1,6 +1,8 @@
 "use client";
 
 import { useInsight, type InsightTab } from "@/stores/insight";
+import { dispatchDimension } from "@/lib/uiactions";
+import type { CallGraphPayload, GraphView } from "@/types/contract";
 import { CallGraph } from "./CallGraph";
 import { ExecPath } from "./ExecPath";
 import { ArchPanel } from "@/components/treemap/ArchPanel";
@@ -56,7 +58,12 @@ export function InsightPanel() {
       <div className="relative min-h-0 flex-1">
         {tab === "call" &&
           (call && call.nodes.length ? (
-            <CallGraph payload={call} />
+            <div className="flex h-full flex-col">
+              <GraphControls payload={call} />
+              <div className="min-h-0 flex-1">
+                <CallGraph payload={call} />
+              </div>
+            </div>
           ) : (
             <Empty hint="Select a function/file, press ⌥2 to see who calls what" />
           ))}
@@ -69,6 +76,60 @@ export function InsightPanel() {
         {tab === "arch" && <ArchPanel />}
       </div>
     </div>
+  );
+}
+
+/** ⌥2 LOD 控件：函数级↔模块级折叠 + 深度 N 跳（DS §15.5）。 */
+function GraphControls({ payload }: { payload: CallGraphPayload }) {
+  const view = useInsight((s) => s.graphView);
+  const setGraphView = useInsight((s) => s.setGraphView);
+
+  function apply(next: GraphView) {
+    setGraphView(next);
+    void dispatchDimension(payload.focus, 2);
+  }
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border px-2 py-1">
+      <span className="font-pixel text-pixel-label uppercase text-text-tertiary">View</span>
+      <Seg active={view.level === "function"} onClick={() => apply({ ...view, level: "function" })}>
+        Functions
+      </Seg>
+      <Seg active={view.level === "module"} onClick={() => apply({ ...view, level: "module" })}>
+        Modules
+      </Seg>
+      <span className="ml-2 font-pixel text-pixel-label uppercase text-text-tertiary">Depth</span>
+      {[1, 2, 3].map((d) => (
+        <Seg key={d} active={view.depth === d} onClick={() => apply({ ...view, depth: d })}>
+          {d}
+        </Seg>
+      ))}
+    </div>
+  );
+}
+
+function Seg({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded px-1.5 py-0.5 text-caption transition-colors duration-1 ease-out",
+        active
+          ? "bg-accent text-accent-fg"
+          : "text-text-secondary hover:bg-surface-hover hover:text-text",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

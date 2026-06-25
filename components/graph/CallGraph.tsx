@@ -15,6 +15,7 @@ import ReactFlow, {
 import type { CallGraphPayload, Focus } from "@/types/contract";
 import { layoutDag, NODE_H, NODE_W } from "./layout";
 import { useFocus } from "@/stores/focus";
+import { useInsight } from "@/stores/insight";
 import { dispatchDimension } from "@/lib/uiactions";
 import { cn } from "@/lib/utils";
 
@@ -102,6 +103,14 @@ function CallGraphInner({ payload }: { payload: CallGraphPayload }) {
   }, [fitView]);
 
   function onNodeClick(_: unknown, node: Node) {
+    // 模块节点：展开到函数级（保持当前焦点重新派发）
+    if ((node.data as NodeData)?.kind === "module") {
+      const v = useInsight.getState().graphView;
+      useInsight.getState().setGraphView({ ...v, level: "function" });
+      const cur = useFocus.getState().current;
+      if (cur) void dispatchDimension(cur, 2);
+      return;
+    }
     const focus: Focus = { type: "function", ref: node.id };
     setFocus(focus);
     void dispatchDimension(focus, 2); // node click = drill + re-center (V3 §6.7)
