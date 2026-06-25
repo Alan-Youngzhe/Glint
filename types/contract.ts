@@ -86,6 +86,7 @@ export interface GraphEdge {
   to: string;
   relation: "calls" | "imports" | "depends";
   nl?: string;
+  confidence?: number; // 调用边解析置信度（<0.5 为弱推断，前端虚线弱化）
 }
 
 export interface CallGraphPayload {

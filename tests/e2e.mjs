@@ -100,7 +100,7 @@ async function main() {
   const up = await (await fetch(BASE + "/api/projects", { method: "POST", body: fd })).json();
   const pid = up.project?.id;
   ok("上传返回 projectId", !!pid);
-  ok("收录 6 个文件", up.fileCount === 6, `fileCount=${up.fileCount}`);
+  ok("收录 11 个文件", up.fileCount === 11, `fileCount=${up.fileCount}`);
   ok("过滤 node_modules + lockfile (skipped=2)", up.skipped === 2, `skipped=${up.skipped}`);
   ok("解析出 ≥8 符号", up.parsed?.symbols >= 8, `symbols=${up.parsed?.symbols}`);
   ok("解析出 ≥3 调用边", up.parsed?.edges >= 3, `edges=${up.parsed?.edges}`);
@@ -124,6 +124,25 @@ async function main() {
   ok(
     "跨文件边 getProfile→requireUser",
     sym.edges.some((e) => /getProfile/.test(e.caller) && /requireUser/.test(e.callee)),
+  );
+
+  section("3b. import-aware 解析 + this 绑定 + 置信度 (借鉴 #5-7)");
+  const runEdge = sym.edges.find((e) => /dup\/use\.ts#run/.test(e.caller ?? ""));
+  ok(
+    "import 消歧：run→save 连到 store 而非 cache",
+    !!runEdge && /dup\/store\.ts#save/.test(runEdge.callee ?? ""),
+    `callee=${runEdge?.callee}`,
+  );
+  ok("import 解析的边 confidence=1", runEdge?.confidence === 1, `conf=${runEdge?.confidence}`);
+  ok(
+    "无 import 的裸同名调用降为低置信(<0.5)",
+    sym.edges.some((e) => /dup\/loose\.ts#ping/.test(e.caller ?? "") && (e.confidence ?? 1) < 0.5),
+  );
+  ok(
+    "this 绑定：Box.add→Box.helper（本类方法）",
+    sym.edges.some(
+      (e) => /svc\/box\.ts#add/.test(e.caller ?? "") && /svc\/box\.ts#helper/.test(e.callee ?? "") && e.confidence === 1,
+    ),
   );
 
   section("4. 四维理解 (M3)");

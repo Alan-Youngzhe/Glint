@@ -198,6 +198,8 @@ model CallEdge {
   callerSymbolId String @map("caller_symbol_id")
   calleeSymbolId String @map("callee_symbol_id")
   refCount       Int    @default(1) @map("ref_count")
+  // 解析置信度：1.0=import/同文件/this 确定解析；0.5=全局唯一同名；0.4=全局多同名歧义
+  confidence     Float  @default(1) @map("confidence")
 
   @@index([projectId])
   @@map("call_edges")

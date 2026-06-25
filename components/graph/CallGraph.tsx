@@ -57,16 +57,22 @@ function CallGraphInner({ payload }: { payload: CallGraphPayload }) {
       position: { x: n.x, y: n.y },
       data: { label: n.label, kind: n.kind, isFocus: n.isFocus },
     }));
-    const edges: Edge[] = payload.edges.map((e, i) => ({
-      id: `e${i}`,
-      source: e.from,
-      target: e.to,
-      label: e.nl,
-      labelStyle: { fill: "var(--text-secondary)", fontSize: 11 },
-      labelBgStyle: { fill: "var(--surface)", fillOpacity: 0.85 },
-      style: { stroke: "var(--border-strong)" },
-      animated: false,
-    }));
+    const edges: Edge[] = payload.edges.map((e, i) => {
+      const weak = e.confidence !== undefined && e.confidence < 0.5;
+      return {
+        id: `e${i}`,
+        source: e.from,
+        target: e.to,
+        label: e.nl,
+        labelStyle: { fill: "var(--text-secondary)", fontSize: 11 },
+        labelBgStyle: { fill: "var(--surface)", fillOpacity: 0.85 },
+        // 弱推断边（同名歧义）：虚线 + 降透明度，呼应"确定解析 vs 猜"
+        style: weak
+          ? { stroke: "var(--border-strong)", strokeDasharray: "4 3", opacity: 0.5 }
+          : { stroke: "var(--border-strong)" },
+        animated: false,
+      };
+    });
     return { nodes, edges };
   }, [payload]);
 

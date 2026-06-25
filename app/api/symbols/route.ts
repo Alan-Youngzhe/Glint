@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
     caller: nameById.get(e.callerSymbolId),
     callee: nameById.get(e.calleeSymbolId),
     refCount: e.refCount,
+    confidence: e.confidence,
   }));
 
   return NextResponse.json({

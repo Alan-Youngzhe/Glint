@@ -10,12 +10,25 @@ export interface ExtractedSymbol {
   startIndex: number;
   endIndex: number;
   signature?: string;
+  enclosingClass?: string; // method 所属类（this 绑定用）
 }
+
+/** 调用点接收者：none=裸 foo()；this=本类方法；其他=obj.foo() 的 obj 文本。 */
+export type CallReceiver = "none" | "this" | (string & {});
 
 export interface ExtractedCall {
   calleeName: string;
+  receiver: CallReceiver;
   line: number;
   index: number; // 字节偏移，用于定位调用所在的外层符号
+}
+
+/** 一条 import 绑定：localName 在本文件可见，来自 fromModule 的 importedName。 */
+export interface ExtractedImport {
+  localName: string; // 本文件引用名（有别名取别名）
+  importedName: string; // 来源模块里的原名（namespace 取 "*"，default 取 "default"）
+  fromModule: string; // 原始模块字符串（相对路径或包名）
+  line: number;
 }
 
 export interface ExtractedChunk {
@@ -51,7 +64,12 @@ function firstLine(text: string): string {
   return line.length > 160 ? line.slice(0, 160) : line;
 }
 
-function toSymbol(node: Node, name: string, kind: SymKind): ExtractedSymbol {
+function toSymbol(
+  node: Node,
+  name: string,
+  kind: SymKind,
+  enclosingClass?: string,
+): ExtractedSymbol {
   return {
     name,
     kind,
@@ -60,7 +78,18 @@ function toSymbol(node: Node, name: string, kind: SymKind): ExtractedSymbol {
     startIndex: node.startIndex,
     endIndex: node.endIndex,
     signature: firstLine(node.text),
+    ...(enclosingClass ? { enclosingClass } : {}),
   };
+}
+
+/** 沿父链找最近的类节点，返回类名。 */
+function enclosingClassName(node: Node, classType: string): string | undefined {
+  let p = node.parent;
+  while (p) {
+    if (p.type === classType) return p.childForFieldName("name")?.text ?? undefined;
+    p = p.parent;
+  }
+  return undefined;
 }
 
 const JS_FAMILY: Grammar[] = ["typescript", "tsx", "javascript"];
@@ -83,9 +112,10 @@ export function extractSymbols(root: Node, grammar: Grammar): ExtractedSymbol[] 
     root
       .descendantsOfType("class_declaration")
       .forEach((n) => push(n, n.childForFieldName("name")?.text, "class"));
-    root
-      .descendantsOfType("method_definition")
-      .forEach((n) => push(n, n.childForFieldName("name")?.text, "method"));
+    root.descendantsOfType("method_definition").forEach((n) => {
+      const name = n.childForFieldName("name")?.text;
+      if (name) out.push(toSymbol(n, name, "method", enclosingClassName(n, "class_declaration")));
+    });
     root.descendantsOfType("variable_declarator").forEach((n) => {
       const name = n.childForFieldName("name")?.text;
       const value = n.childForFieldName("value");
@@ -95,8 +125,11 @@ export function extractSymbols(root: Node, grammar: Grammar): ExtractedSymbol[] 
     });
   } else if (grammar === "python") {
     root.descendantsOfType("function_definition").forEach((n) => {
+      const name = n.childForFieldName("name")?.text;
+      if (!name) return;
       const inClass = isInside(n, "class_definition");
-      push(n, n.childForFieldName("name")?.text, inClass ? "method" : "function");
+      if (inClass) out.push(toSymbol(n, name, "method", enclosingClassName(n, "class_definition")));
+      else out.push(toSymbol(n, name, "function"));
     });
     root
       .descendantsOfType("class_definition")
@@ -110,25 +143,91 @@ export function extractSymbols(root: Node, grammar: Grammar): ExtractedSymbol[] 
   return out;
 }
 
+/** 把接收者节点归一成 none/this/标识符文本（复杂表达式→none）。 */
+function receiverOf(objectNode: Node | null, selfWords: Set<string>): CallReceiver {
+  if (!objectNode) return "none";
+  if (objectNode.type === "this" || selfWords.has(objectNode.text)) return "this";
+  if (objectNode.type === "identifier") return objectNode.text;
+  return "none";
+}
+
 export function extractCalls(root: Node, grammar: Grammar): ExtractedCall[] {
   const out: ExtractedCall[] = [];
 
   if (JS_FAMILY.includes(grammar)) {
+    const self = new Set(["this"]);
     root.descendantsOfType("call_expression").forEach((n) => {
       const fn = n.childForFieldName("function");
       let name: string | undefined;
+      let receiver: CallReceiver = "none";
       if (fn?.type === "identifier") name = fn.text;
-      else if (fn?.type === "member_expression")
+      else if (fn?.type === "member_expression") {
         name = fn.childForFieldName("property")?.text;
-      if (name) out.push({ calleeName: name, line: n.startPosition.row + 1, index: n.startIndex });
+        receiver = receiverOf(fn.childForFieldName("object"), self);
+      }
+      if (name) out.push({ calleeName: name, receiver, line: n.startPosition.row + 1, index: n.startIndex });
     });
   } else if (grammar === "python") {
+    const self = new Set(["self", "cls"]);
     root.descendantsOfType("call").forEach((n) => {
       const fn = n.childForFieldName("function");
       let name: string | undefined;
+      let receiver: CallReceiver = "none";
       if (fn?.type === "identifier") name = fn.text;
-      else if (fn?.type === "attribute") name = fn.childForFieldName("attribute")?.text;
-      if (name) out.push({ calleeName: name, line: n.startPosition.row + 1, index: n.startIndex });
+      else if (fn?.type === "attribute") {
+        name = fn.childForFieldName("attribute")?.text;
+        receiver = receiverOf(fn.childForFieldName("object"), self);
+      }
+      if (name) out.push({ calleeName: name, receiver, line: n.startPosition.row + 1, index: n.startIndex });
+    });
+  }
+
+  return out;
+}
+
+/** 抽取 import 绑定：localName → (fromModule 的 importedName)。供跨文件 import-aware 解析。 */
+export function extractImports(root: Node, grammar: Grammar): ExtractedImport[] {
+  const out: ExtractedImport[] = [];
+  const moduleText = (s: string | undefined): string =>
+    (s ?? "").replace(/^['"`]|['"`]$/g, "");
+
+  if (JS_FAMILY.includes(grammar)) {
+    root.descendantsOfType("import_statement").forEach((n) => {
+      const from = moduleText(n.childForFieldName("source")?.text);
+      const line = n.startPosition.row + 1;
+      if (!from) return;
+      const clause = n.namedChildren.find((c) => c.type === "import_clause");
+      if (!clause) return;
+      for (const c of clause.namedChildren) {
+        if (c.type === "identifier") {
+          // default import: import Foo from "..."
+          out.push({ localName: c.text, importedName: "default", fromModule: from, line });
+        } else if (c.type === "namespace_import") {
+          const id = c.namedChildren.find((x) => x.type === "identifier");
+          if (id) out.push({ localName: id.text, importedName: "*", fromModule: from, line });
+        } else if (c.type === "named_imports") {
+          c.descendantsOfType("import_specifier").forEach((spec) => {
+            const orig = spec.childForFieldName("name")?.text;
+            const alias = spec.childForFieldName("alias")?.text;
+            if (orig) out.push({ localName: alias ?? orig, importedName: orig, fromModule: from, line });
+          });
+        }
+      }
+    });
+  } else if (grammar === "python") {
+    // from .mod import foo, bar as baz
+    root.descendantsOfType("import_from_statement").forEach((n) => {
+      const from = n.childForFieldName("module_name")?.text ?? "";
+      const line = n.startPosition.row + 1;
+      for (const c of n.namedChildren) {
+        if (c.type === "dotted_name" && c !== n.childForFieldName("module_name")) {
+          out.push({ localName: c.text, importedName: c.text, fromModule: from, line });
+        } else if (c.type === "aliased_import") {
+          const orig = c.childForFieldName("name")?.text;
+          const alias = c.childForFieldName("alias")?.text;
+          if (orig) out.push({ localName: alias ?? orig, importedName: orig, fromModule: from, line });
+        }
+      }
     });
   }
 

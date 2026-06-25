@@ -100,6 +100,7 @@ async function callGraphFor(req: UnderstandRequest): Promise<CallGraphPayload> {
       to: e.calleeSymbolId,
       relation: "calls" as const,
       nl: `${byId.get(e.callerSymbolId)!.name} calls ${byId.get(e.calleeSymbolId)!.name}`,
+      confidence: e.confidence,
     }));
 
   return {

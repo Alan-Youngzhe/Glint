@@ -6,12 +6,14 @@ import { createParser, grammarForPath, resetRuntime, type Grammar, type TSParser
 import {
   extractCalls,
   extractChunks,
+  extractImports,
   extractSymbols,
   type ExtractedCall,
   type ExtractedChunk,
+  type ExtractedImport,
   type ExtractedSymbol,
-  type SymKind,
 } from "./extract";
+import { buildResolveContext, resolveCallee, type FileParse } from "./resolve";
 
 export interface ParseResult {
   symbols: number;
@@ -24,15 +26,9 @@ interface FileWork {
   relPath: string;
   symbols: (ExtractedSymbol & { id?: string })[];
   calls: ExtractedCall[];
+  imports: ExtractedImport[];
   chunks: ExtractedChunk[];
 }
-
-const KIND_RANK: Record<SymKind, number> = {
-  function: 0,
-  method: 1,
-  class: 2,
-  variable: 3,
-};
 
 /**
  * 解析项目所有可识别源文件 → symbols / symbol_refs / call_edges（确定性，可重入）。
@@ -85,9 +81,10 @@ async function runParse(projectId: string): Promise<ParseResult> {
     if (!tree) continue;
     const symbols = extractSymbols(tree.rootNode, grammar);
     const calls = extractCalls(tree.rootNode, grammar);
+    const imports = extractImports(tree.rootNode, grammar);
     const chunks = extractChunks(tree.rootNode, grammar);
     tree.delete();
-    work.push({ fileId: f.id, relPath: f.relPath, symbols, calls, chunks });
+    work.push({ fileId: f.id, relPath: f.relPath, symbols, calls, imports, chunks });
   }
   parsers.forEach((p) => p.delete());
 
@@ -121,19 +118,16 @@ async function runParse(projectId: string): Promise<ParseResult> {
   for (const s of dbSymbols)
     idByKey.set(keyOf(s.fileId, s.name, s.startLine, s.kind), s.id);
 
-  // 全局 name → symbolId（偏好 function/method/class）
-  const nameToId = new Map<string, string>();
-  const ranked = [...dbSymbols].sort(
-    (a, b) =>
-      KIND_RANK[a.kind as SymKind] - KIND_RANK[b.kind as SymKind],
-  );
-  for (const s of ranked) if (!nameToId.has(s.name)) nameToId.set(s.name, s.id);
-
   for (const w of work)
     for (const s of w.symbols)
       s.id = idByKey.get(keyOf(w.fileId, s.name, s.startLine, s.kind));
 
-  // 构造 refs（def + call）与 edges（外层函数 → callee）
+  // import-aware 解析索引（同文件 > import 来源 > 全局兜底，带置信度）
+  const ctx = buildResolveContext(
+    work.map((w): FileParse => ({ relPath: w.relPath, symbols: w.symbols, imports: w.imports })),
+  );
+
+  // 构造 refs（def + call）与 edges（外层函数 → callee，带 confidence）
   const refRows: {
     symbolId: string;
     projectId: string;
@@ -141,7 +135,10 @@ async function runParse(projectId: string): Promise<ParseResult> {
     refLine: number;
     refKind: "def" | "call";
   }[] = [];
-  const edgeAgg = new Map<string, { caller: string; callee: string; count: number }>();
+  const edgeAgg = new Map<
+    string,
+    { caller: string; callee: string; count: number; confidence: number }
+  >();
 
   for (const w of work) {
     // def
@@ -155,34 +152,43 @@ async function runParse(projectId: string): Promise<ParseResult> {
           refKind: "def",
         });
 
-    // 外层函数（function/method）按 index 范围，便于定位调用者
+    // 外层函数（function/method）按 index 范围，便于定位调用者（取最内层）
     const enclosers = w.symbols
       .filter((s) => s.id && (s.kind === "function" || s.kind === "method"))
       .sort((a, b) => a.startIndex - b.startIndex);
-    const enclosingOf = (idx: number): string | undefined => {
+    const enclosingOf = (idx: number): (ExtractedSymbol & { id?: string }) | undefined => {
       let best: (ExtractedSymbol & { id?: string }) | undefined;
       for (const s of enclosers)
         if (s.startIndex <= idx && idx < s.endIndex)
           if (!best || s.startIndex > best.startIndex) best = s;
-      return best?.id;
+      return best;
     };
 
     for (const c of w.calls) {
-      const calleeId = nameToId.get(c.calleeName);
-      if (!calleeId) continue;
+      const caller = enclosingOf(c.index);
+      const resolved = resolveCallee(c, w.relPath, caller, ctx);
+      if (!resolved) continue;
       refRows.push({
-        symbolId: calleeId,
+        symbolId: resolved.calleeId,
         projectId,
         refFileId: w.fileId,
         refLine: c.line,
         refKind: "call",
       });
-      const callerId = enclosingOf(c.index);
-      if (callerId && callerId !== calleeId) {
-        const k = `${callerId}|${calleeId}`;
+      if (caller?.id && caller.id !== resolved.calleeId) {
+        const k = `${caller.id}|${resolved.calleeId}`;
         const e = edgeAgg.get(k);
-        if (e) e.count++;
-        else edgeAgg.set(k, { caller: callerId, callee: calleeId, count: 1 });
+        if (e) {
+          e.count++;
+          e.confidence = Math.max(e.confidence, resolved.confidence);
+        } else {
+          edgeAgg.set(k, {
+            caller: caller.id,
+            callee: resolved.calleeId,
+            count: 1,
+            confidence: resolved.confidence,
+          });
+        }
       }
     }
   }
@@ -194,6 +200,7 @@ async function runParse(projectId: string): Promise<ParseResult> {
     callerSymbolId: e.caller,
     calleeSymbolId: e.callee,
     refCount: e.count,
+    confidence: e.confidence,
   }));
   if (edgeRows.length) await prisma.callEdge.createMany({ data: edgeRows });
 
