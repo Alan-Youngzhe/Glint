@@ -15,9 +15,16 @@ function getClient(): Anthropic {
   if (!client) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-    client = new Anthropic({ apiKey });
+    // 支持 Anthropic 兼容网关（如 DeepSeek 的 /anthropic 端点）：设了 ANTHROPIC_BASE_URL 即走它
+    const baseURL = process.env.ANTHROPIC_BASE_URL;
+    client = new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) });
   }
   return client;
+}
+
+/** 兼容网关下用 ANTHROPIC_MODEL 全局覆盖模型名（claude-* 在第三方端点跑不了）。 */
+function resolveModel(reqModel: string | undefined): string {
+  return process.env.ANTHROPIC_MODEL ?? reqModel ?? DEFAULT_MODEL;
 }
 
 /** 把契约 messages 拆成 Anthropic 的 system + messages。 */
@@ -36,7 +43,7 @@ export const anthropicProvider: LLMProvider = {
   name: "anthropic",
 
   async complete(req: LLMRequest): Promise<LLMResponse> {
-    const model = req.model ?? DEFAULT_MODEL;
+    const model = resolveModel(req.model);
     const { system, messages } = split(req);
     const res = await getClient().messages.create({
       model,
@@ -65,7 +72,7 @@ export const anthropicProvider: LLMProvider = {
   },
 
   async *stream(req: LLMRequest): AsyncIterable<LLMStreamChunk> {
-    const model = req.model ?? DEFAULT_MODEL;
+    const model = resolveModel(req.model);
     const { system, messages } = split(req);
     const stream = await getClient().messages.create({
       model,

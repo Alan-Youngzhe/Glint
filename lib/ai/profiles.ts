@@ -8,7 +8,7 @@ export const PROFILES: Record<TaskProfile, ProfileConfig> = {
   file_card: { provider: "anthropic", model: "claude-haiku-4-5-20251001", batch: true, cache: true },
   symbol_card: { provider: "anthropic", model: "claude-haiku-4-5-20251001", cache: true },
   module_arch: { provider: "anthropic", model: "claude-sonnet-4-6" },
-  structure_gen: { provider: "anthropic", model: "claude-sonnet-4-6", temperature: 0 },
+  structure_gen: { provider: "anthropic", model: "claude-sonnet-4-6", temperature: 0, maxTokens: 4096 },
   edge_nl: { provider: "anthropic", model: "claude-haiku-4-5-20251001", cache: true },
   exec_path: { provider: "anthropic", model: "claude-sonnet-4-6", cache: true },
   explain: { provider: "anthropic", model: "claude-sonnet-4-6", temperature: 0.2 },
