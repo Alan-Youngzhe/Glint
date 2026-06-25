@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { ArchitecturePayload, ArchModule, ArchRole } from "@/types/contract";
+import type { ArchitecturePayload, ArchModule, ArchRole, TreemapNode } from "@/types/contract";
 import { useWorkspace } from "@/stores/workspace";
 import { useFocus } from "@/stores/focus";
+import { dottedAddress, nodeAtPath, shouldExpand } from "@/lib/pregen/expand-rules";
 import { cn } from "@/lib/utils";
 
 /** 角色 → 人话层（产品视角能读懂，按"离用户多近"从上到下排）。 */
@@ -21,8 +22,10 @@ export function ArchPanel() {
   const setActiveFile = useWorkspace((s) => s.setActiveFile);
   const setFocus = useFocus((s) => s.setFocus);
   const [data, setData] = useState<ArchitecturePayload | null>(null);
+  const [path, setPath] = useState<string[]>([]); // 下钻路径（各级 name）
 
   useEffect(() => {
+    setPath([]);
     if (!projectId) {
       setData(null);
       return;
@@ -37,19 +40,10 @@ export function ArchPanel() {
   if (!projectId) return <Shell hint="Select a project first" />;
   if (!data) return <Shell hint="Loading…" />;
 
-  const modules = data.modules ?? [];
-  const maxLoc = Math.max(1, ...modules.map((m) => m.loc));
-  const tiers = TIERS.map((t) => ({
-    ...t,
-    items: modules.filter((m) => m.role === t.role),
-  })).filter((t) => t.items.length > 0);
-
-  function open(m: ArchModule) {
-    if (m.topFile) setActiveFile(m.topFile);
-    setFocus({ type: "file", ref: m.topFile || m.pathScope });
+  function openFile(relPath: string) {
+    setActiveFile(relPath);
+    setFocus({ type: "file", ref: relPath });
   }
-
-  const hasSummary = data.overview.summary && data.overview.summary !== "(not analyzed yet)";
 
   return (
     <div className="flex h-full flex-col bg-surface">
@@ -61,66 +55,157 @@ export function ArchPanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto px-3 pb-3">
-        {/* 一句话：这个系统是什么 */}
-        {hasSummary && (
-          <p className="mt-2 rounded-md border border-border bg-surface-elevated p-2.5 text-body-sm leading-relaxed text-text-secondary">
-            {data.overview.summary}
-          </p>
-        )}
-
-        {/* 技术栈图例 */}
-        {data.techStack.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            {data.techStack.slice(0, 8).map((t) => (
-              <span key={t} className="flex items-center gap-1 text-caption text-text-secondary">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent-text" />
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* 分层：每层一组模块卡 */}
-        {modules.length === 0 ? (
-          <p className="mt-6 text-center text-caption text-text-tertiary">
-            No modules detected yet
-          </p>
+        {path.length === 0 ? (
+          <Overview data={data} onDrill={(name) => setPath([name])} onOpen={openFile} />
         ) : (
-          <div className="mt-3 flex flex-col gap-3">
-            {tiers.map((t) => (
-              <section key={t.role}>
-                <div className="mb-1.5 flex items-baseline gap-2">
-                  <span className="font-pixel text-pixel-label uppercase text-accent-text">
-                    {t.label}
-                  </span>
-                  <span className="truncate text-caption text-text-tertiary">{t.blurb}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {t.items.map((m) => (
-                    <ModuleCard
-                      key={m.name}
-                      module={m}
-                      widthPct={Math.max(0.08, m.loc / maxLoc)}
-                      onClick={() => open(m)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <DrillView
+            root={data.root}
+            path={path}
+            onNavigate={setPath}
+            onDrill={(name) => setPath([...path, name])}
+            onOpen={openFile}
+          />
         )}
       </div>
     </div>
   );
 }
 
+/** 顶层概览：一句话概述 + 技术栈 + 按角色分层的模块卡。 */
+function Overview({
+  data,
+  onDrill,
+  onOpen,
+}: {
+  data: ArchitecturePayload;
+  onDrill: (name: string) => void;
+  onOpen: (relPath: string) => void;
+}) {
+  const modules = data.modules ?? [];
+  const maxLoc = Math.max(1, ...modules.map((m) => m.loc));
+  const tiers = TIERS.map((t) => ({ ...t, items: modules.filter((m) => m.role === t.role) })).filter(
+    (t) => t.items.length > 0,
+  );
+  const hasSummary = data.overview.summary && data.overview.summary !== "(not analyzed yet)";
+
+  // 模块能否下钻：其根子节点是有子项的目录
+  const drillable = (m: ArchModule) => {
+    const n = nodeAtPath(data.root, [m.name]);
+    return !!n && shouldExpand(n);
+  };
+
+  return (
+    <>
+      {hasSummary && (
+        <p className="mt-2 rounded-md border border-border bg-surface-elevated p-2.5 text-body-sm leading-relaxed text-text-secondary">
+          {data.overview.summary}
+        </p>
+      )}
+
+      {data.techStack.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+          {data.techStack.slice(0, 8).map((t) => (
+            <span key={t} className="flex items-center gap-1 text-caption text-text-secondary">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-text" />
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {modules.length === 0 ? (
+        <p className="mt-6 text-center text-caption text-text-tertiary">No modules detected yet</p>
+      ) : (
+        <div className="mt-3 flex flex-col gap-3">
+          {tiers.map((t) => (
+            <section key={t.role}>
+              <div className="mb-1.5 flex items-baseline gap-2">
+                <span className="font-pixel text-pixel-label uppercase text-accent-text">{t.label}</span>
+                <span className="truncate text-caption text-text-tertiary">{t.blurb}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {t.items.map((m) => (
+                  <ModuleCard
+                    key={m.name}
+                    module={m}
+                    widthPct={Math.max(0.08, m.loc / maxLoc)}
+                    canDrill={drillable(m)}
+                    onClick={() => (drillable(m) ? onDrill(m.name) : m.topFile && onOpen(m.topFile))}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** 下钻视图：面包屑 + 当前节点的子项（目录可再钻，文件点开），带 dotted 编号。 */
+function DrillView({
+  root,
+  path,
+  onNavigate,
+  onDrill,
+  onOpen,
+}: {
+  root: TreemapNode;
+  path: string[];
+  onNavigate: (path: string[]) => void;
+  onDrill: (name: string) => void;
+  onOpen: (relPath: string) => void;
+}) {
+  const node = nodeAtPath(root, path);
+  const children = node?.children ?? [];
+  const maxLoc = Math.max(1, ...children.map((c) => c.loc));
+  const address = dottedAddress(root, path);
+
+  return (
+    <>
+      {/* 面包屑 */}
+      <div className="mt-2 flex flex-wrap items-center gap-1 text-caption text-text-tertiary">
+        <button type="button" className="hover:text-text" onClick={() => onNavigate([])}>
+          Map
+        </button>
+        {path.map((seg, i) => (
+          <span key={i} className="flex items-center gap-1">
+            <span className="text-text-tertiary">/</span>
+            <button
+              type="button"
+              className={cn("hover:text-text", i === path.length - 1 && "text-text")}
+              onClick={() => onNavigate(path.slice(0, i + 1))}
+            >
+              {seg}
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        {children.map((c, i) => (
+          <DrillCard
+            key={c.id}
+            node={c}
+            dotted={address ? `${address}.${i + 1}` : `${i + 1}`}
+            widthPct={Math.max(0.08, c.loc / maxLoc)}
+            onClick={() => (shouldExpand(c) ? onDrill(c.name) : onOpen(c.id))}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
 function ModuleCard({
   module,
   widthPct,
+  canDrill,
   onClick,
 }: {
   module: ArchModule;
   widthPct: number;
+  canDrill: boolean;
   onClick: () => void;
 }) {
   const activeRef = useFocus((s) => s.current?.ref);
@@ -143,8 +228,8 @@ function ModuleCard({
           </span>
         )}
         <span className="truncate text-body-sm font-medium text-text">{label}</span>
+        {canDrill && <span className="ml-auto shrink-0 text-caption text-text-tertiary">›</span>}
       </div>
-      {/* 体量条：相对最大模块的 LOC */}
       <div className="h-1 w-full overflow-hidden rounded-full bg-bg-subtle">
         <div className="h-full rounded-full bg-accent/70" style={{ width: `${widthPct * 100}%` }} />
       </div>
@@ -152,13 +237,53 @@ function ModuleCard({
         <span>{module.fileCount} file{module.fileCount === 1 ? "" : "s"}</span>
         <span>{module.loc} LOC</span>
       </div>
-      {/* 谁用谁：这个模块依赖的其他模块 */}
       {module.uses.length > 0 && (
         <div className="truncate text-caption text-text-tertiary">
           → uses {module.uses.slice(0, 3).join(", ")}
           {module.uses.length > 3 ? ` +${module.uses.length - 3}` : ""}
         </div>
       )}
+    </button>
+  );
+}
+
+function DrillCard({
+  node,
+  dotted,
+  widthPct,
+  onClick,
+}: {
+  node: TreemapNode;
+  dotted: string;
+  widthPct: number;
+  onClick: () => void;
+}) {
+  const activeRef = useFocus((s) => s.current?.ref);
+  const isDir = shouldExpand(node);
+  const on = activeRef === node.id;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={`${node.id} · ${node.loc} LOC`}
+      className={cn(
+        "flex flex-col gap-1.5 rounded-md border p-2 text-left transition-colors duration-1 ease-out",
+        on ? "border-accent bg-surface-hover" : "border-border bg-surface-elevated hover:bg-surface-hover",
+      )}
+    >
+      <div className="flex items-center gap-1.5">
+        <span className="shrink-0 font-pixel text-pixel-label text-text-tertiary">{dotted}</span>
+        <span className="shrink-0 text-caption text-text-tertiary">{isDir ? "▸" : "·"}</span>
+        <span className="truncate text-body-sm font-medium text-text">{node.name}</span>
+        {isDir && <span className="ml-auto shrink-0 text-caption text-text-tertiary">›</span>}
+      </div>
+      <div className="h-1 w-full overflow-hidden rounded-full bg-bg-subtle">
+        <div className="h-full rounded-full bg-accent/70" style={{ width: `${widthPct * 100}%` }} />
+      </div>
+      <div className="flex items-center justify-between text-caption text-text-tertiary">
+        <span>{isDir ? `${node.children?.length ?? 0} items` : "file"}</span>
+        <span>{node.loc} LOC</span>
+      </div>
     </button>
   );
 }
