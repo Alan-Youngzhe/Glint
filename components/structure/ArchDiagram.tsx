@@ -28,12 +28,43 @@ export function ArchDiagram({
   onOpen: (path: string, startLine: number | null) => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const onOpenRef = useRef(onOpen);
   onOpenRef.current = onOpen;
   const [graph, setGraph] = useState<DiagramGraph | null>(null);
   const [source, setSource] = useState<Source>("loading");
   const [scale, setScale] = useState(1);
   const [err, setErr] = useState<string | null>(null);
+
+  // 缩放通过设 svg 实际宽度实现（布局=视觉，无幻影滚动）；高度按 viewBox 比例自适应
+  function applyWidth(s: number) {
+    const svg = hostRef.current?.querySelector("svg");
+    const natural = svg?.viewBox?.baseVal?.width;
+    if (svg && natural) {
+      svg.style.width = `${natural * s}px`;
+      svg.style.height = "auto";
+      svg.style.maxWidth = "none";
+    }
+  }
+
+  // 按容器宽度自适应：scale = 容器内宽 / 图自然宽（封顶 1x）
+  function fitToContainer() {
+    const svg = hostRef.current?.querySelector("svg");
+    const box = scrollRef.current;
+    const natural = svg?.viewBox?.baseVal?.width;
+    if (!natural || !box) return;
+    const avail = box.clientWidth - 24;
+    const next = avail > 0 ? Math.min(1, Math.max(0.2, avail / natural)) : 1;
+    setScale(next);
+    applyWidth(next);
+    box.scrollTo({ left: 0, top: 0 });
+  }
+
+  // 缩放按钮改变 scale 时同步 svg 宽度
+  useEffect(() => {
+    applyWidth(scale);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scale]);
 
   // 取 LLM 图；失败/无 key → 降级到确定性
   useEffect(() => {
@@ -123,6 +154,8 @@ export function ArchDiagram({
           g.style.cursor = "pointer";
           g.addEventListener("click", () => onOpenRef.current(hit.path, hit.startLine));
         });
+
+        requestAnimationFrame(() => fitToContainer()); // 渲染后按容器宽度自适应
       } catch (e) {
         if (alive) setErr(e instanceof Error ? e.message : String(e));
       }
@@ -159,19 +192,15 @@ export function ArchDiagram({
         </button>
       </div>
       <div className="absolute right-2 top-2 z-10 flex gap-1">
-        <ZoomBtn label="−" onClick={() => setScale((s) => Math.max(0.4, s - 0.2))} />
-        <ZoomBtn label="Fit" onClick={() => setScale(1)} small />
+        <ZoomBtn label="−" onClick={() => setScale((s) => Math.max(0.2, s - 0.2))} />
+        <ZoomBtn label="Fit" onClick={fitToContainer} small />
         <ZoomBtn label="+" onClick={() => setScale((s) => Math.min(3, s + 0.2))} />
       </div>
       {err ? (
         <p className="p-3 text-caption text-danger">Diagram error: {err}</p>
       ) : (
-        <div className="overflow-auto rounded-lg border border-border bg-white p-3 pt-10">
-          <div
-            ref={hostRef}
-            className="origin-top-left transition-transform duration-1 ease-out [&_svg]:h-auto"
-            style={{ transform: `scale(${scale})` }}
-          />
+        <div ref={scrollRef} className="overflow-auto rounded-lg border border-border bg-white p-3 pt-10">
+          <div ref={hostRef} className="[&_svg]:h-auto" />
         </div>
       )}
     </div>
