@@ -1,0 +1,141 @@
+/**
+ * Glint Design System v0.1 — 令牌总表（Design System §12）
+ * 暗色为默认（:root / [data-theme="dark"]），[data-theme="light"] 覆盖浅色。
+ * 唯一强调色：电蓝。颜色留给代码语法高亮，UI chrome 保持中性。
+ */
+
+:root,
+[data-theme="dark"] {
+  /* ── 原始色阶：Glint Blue ── */
+  --blue-50: #eef1ff;
+  --blue-100: #dbe1ff;
+  --blue-200: #b8c4ff;
+  --blue-300: #8e9cff;
+  --blue-400: #6175ff;
+  --blue-500: #2e4cff;
+  --blue-600: #1e39e6;
+  --blue-700: #182eb8;
+  --blue-800: #16278f;
+  --blue-900: #141e5c;
+
+  /* ── 原始色阶：Neutral（冷调近黑） ── */
+  --neutral-950: #08090a;
+  --neutral-900: #0b0c0e;
+  --neutral-850: #0f1113;
+  --neutral-800: #141619;
+  --neutral-750: #191c20;
+  --neutral-700: #20242a;
+  --neutral-600: #2b3037;
+  --neutral-500: #3c424b;
+  --neutral-400: #565d67;
+  --neutral-300: #79818c;
+  --neutral-200: #a2a9b4;
+  --neutral-100: #ced3da;
+  --neutral-50: #e9ecf1;
+  --neutral-25: #f5f6f8;
+  --white: #ffffff;
+  --black: #000000;
+
+  /* ── 语义色（克制，低饱和） ── */
+  --success: #3fb079;
+  --warning: #d8a33a;
+  --danger: #e5484d;
+  --info: #2e4cff;
+
+  /* ── 暗色主题语义映射（默认） ── */
+  --bg: #08090a;
+  --bg-subtle: #0b0c0e;
+  --surface: #0f1113;
+  --surface-elevated: #141619;
+  --surface-hover: #191c20;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --text: #e9ecf1;
+  --text-secondary: #a2a9b4;
+  --text-tertiary: #79818c;
+  --text-disabled: #565d67;
+  --accent: #2e4cff;
+  --accent-hover: #4360ff;
+  --accent-pressed: #1e39e6;
+  --accent-fg: #ffffff;
+  --accent-text: #8094ff;
+  --focus-ring: 0 0 0 2px rgba(46, 76, 255, 0.55);
+
+  /* 代码语法高亮（§9.11，随主题切换） */
+  --cm-keyword: var(--blue-400);
+  --cm-string: var(--success);
+  --cm-number: var(--accent-text);
+  --cm-active-line: rgba(255, 255, 255, 0.03);
+  --cm-selection: rgba(46, 76, 255, 0.18);
+
+  /* 阴影（暗色） */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+  /* ── 字体 ── */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-pixel: "Departure Mono", "Silkscreen", "JetBrains Mono", monospace;
+
+  /* ── 间距（4px 基准） ── */
+  --space-0: 0;
+  --space-0_5: 2px;
+  --space-1: 4px;
+  --space-1_5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── 圆角 ── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --radius-pixel: 0;
+
+  /* ── 运动 ── */
+  --dur-1: 80ms;
+  --dur-2: 120ms;
+  --dur-3: 160ms;
+  --dur-4: 240ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] {
+  --bg: #f3f3f1;
+  --bg-subtle: #ececea;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-hover: #f1f2f4;
+  --border: rgba(12, 13, 15, 0.1);
+  --border-strong: rgba(12, 13, 15, 0.16);
+  --highlight-top: none;
+  --text: #0c0d0f;
+  --text-secondary: #4b5159;
+  --text-tertiary: #767d86;
+  --text-disabled: #a2a9b4;
+  --accent: #2e4cff;
+  --accent-hover: #1e39e6;
+  --accent-pressed: #182eb8;
+  --accent-fg: #ffffff;
+  --accent-text: #1e39e6;
+  --focus-ring: 0 0 0 2px rgba(46, 76, 255, 0.45);
+
+  --cm-keyword: var(--blue-600);
+  --cm-active-line: rgba(0, 0, 0, 0.03);
+
+  --shadow-1: 0 1px 2px rgba(16, 18, 22, 0.06);
+  --shadow-2: 0 4px 12px rgba(16, 18, 22, 0.08);
+  --shadow-3: 0 12px 32px rgba(16, 18, 22, 0.12);
+}

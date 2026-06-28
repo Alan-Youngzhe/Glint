@@ -1,0 +1,94 @@
+@import "./tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 21px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* focus-visible 一律显示蓝色焦点环（§9 通则 / §11） */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  /* 细、半透明、hover 才明显的滚动条（§9.17） */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  *:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+  [data-theme="light"] *:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 9999px;
+  }
+  *:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  [data-theme="light"] *:hover::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.16);
+  }
+}
+
+/* Dockview 主题 → Glint 令牌（doubled class 提升优先级，与 dockview.css 加载顺序无关）。
+   令牌随 [data-theme] 自动切换，故 dark/light 两个 dockview 主题类共用同一映射。 */
+.dockview-theme-dark.dockview-theme-dark,
+.dockview-theme-light.dockview-theme-light {
+  --dv-group-view-background-color: var(--surface);
+  --dv-tabs-and-actions-container-background-color: var(--bg-subtle);
+  --dv-tabs-and-actions-container-height: 36px;
+  --dv-tabs-and-actions-container-font-size: 13px;
+  --dv-tab-font-size: 13px;
+  --dv-activegroup-visiblepanel-tab-background-color: var(--surface);
+  --dv-activegroup-visiblepanel-tab-color: var(--text);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--bg-subtle);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--text-secondary);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--bg-subtle);
+  --dv-activegroup-hiddenpanel-tab-color: var(--text-tertiary);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bg-subtle);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-tertiary);
+  --dv-separator-border: var(--border);
+  --dv-sash-color: transparent;
+  --dv-active-sash-color: var(--accent);
+  --dv-tab-divider-color: transparent;
+  --dv-paneview-header-border-color: var(--border);
+  --dv-icon-hover-background-color: var(--surface-hover);
+  --dv-drag-over-background-color: rgba(46, 76, 255, 0.12);
+  --dv-drag-over-border-color: var(--accent);
+  --dv-floating-box-shadow: var(--shadow-3);
+  --dv-scrollbar-background-color: transparent;
+  --dv-tabs-container-scrollbar-color: var(--border-strong);
+  --dv-border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

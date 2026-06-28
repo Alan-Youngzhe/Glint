@@ -1,0 +1,61 @@
+{
+  "name": "glint",
+  "version": "0.1.0",
+  "private": true,
+  "prisma": {
+    "schema": "db/schema.prisma"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "e2e": "node tests/e2e.mjs",
+    "parse:stress": "node tests/parse-stress.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
+    "@lezer/highlight": "^1.2.3",
+    "@prisma/client": "^6.2.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "codemirror": "^6.0.2",
+    "d3-hierarchy": "^3.1.2",
+    "dagre": "^0.8.5",
+    "dockview": "^4.2.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.469.0",
+    "mermaid": "^11.15.0",
+    "next": "^15.1.6",
+    "openai": "^4.79.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "reactflow": "^11.11.4",
+    "tailwind-merge": "^2.6.0",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.20.8",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/d3-hierarchy": "^3.1.7",
+    "@types/dagre": "^0.7.54",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "prisma": "^6.2.1",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.3"
+  }
+}

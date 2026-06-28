@@ -1,0 +1,84 @@
+"use client";
+
+import "dockview/dist/styles/dockview.css";
+import {
+  DockviewReact,
+  themeDark,
+  themeLight,
+  type DockviewReadyEvent,
+} from "dockview";
+import type { Theme } from "./ThemeToggle";
+import { FileTreePanel } from "@/components/tree/FileTreePanel";
+import { CodePanel } from "@/components/code/CodePanel";
+import { TechStackPanel } from "@/components/techstack/TechStackPanel";
+import { InsightPanel } from "@/components/graph/InsightPanel";
+import { AgentPanel } from "@/components/agent/AgentPanel";
+import { WeakBoard } from "@/components/insights/WeakBoard";
+
+const components = {
+  filetree: () => <FileTreePanel />,
+  code: () => <CodePanel />,
+  insight: () => <InsightPanel />,
+  techstack: () => <TechStackPanel />,
+  agent: () => <AgentPanel />,
+  weak: () => <WeakBoard />,
+};
+
+function onReady(event: DockviewReadyEvent) {
+  const api = event.api;
+
+  const explorer = api.addPanel({
+    id: "explorer",
+    component: "filetree",
+    title: "Explorer",
+  });
+
+  const code = api.addPanel({
+    id: "code",
+    component: "code",
+    title: "Code",
+    position: { referencePanel: explorer.id, direction: "right" },
+  });
+
+  const insight = api.addPanel({
+    id: "insight",
+    component: "insight",
+    title: "INSIGHT",
+    position: { referencePanel: code.id, direction: "right" },
+  });
+
+  const techstack = api.addPanel({
+    id: "techstack",
+    component: "techstack",
+    title: "Tech stack",
+    position: { referencePanel: insight.id, direction: "below" },
+  });
+
+  api.addPanel({
+    id: "agent",
+    component: "agent",
+    title: "Agent",
+    position: { referencePanel: techstack.id, direction: "within" },
+  });
+
+  api.addPanel({
+    id: "weak",
+    component: "weak",
+    title: "Growth",
+    position: { referencePanel: techstack.id, direction: "within" },
+  });
+
+  explorer.api.setSize({ width: 240 });
+}
+
+export function DockShell({ theme }: { theme: Theme }) {
+  return (
+    <div className="glint-dock h-full w-full">
+      <DockviewReact
+        components={components}
+        onReady={onReady}
+        theme={theme === "dark" ? themeDark : themeLight}
+      />
+    </div>
+  );
+}
